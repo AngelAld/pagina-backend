@@ -10,7 +10,7 @@ class AuthProvider(models.Model):
     nombre = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.name
+        return self.nombre
 
 
 class TipoUsuario(models.Model):
@@ -31,12 +31,8 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     is_verified = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now=True)
-    provider = models.ForeignKey(
-        AuthProvider, on_delete=models.PROTECT, related_name="usuarios", null=True
-    )
-    tipo_usuario = models.ForeignKey(
-        TipoUsuario, on_delete=models.PROTECT, related_name="usuarios", null=True
-    )
+    provider = models.ManyToManyField(AuthProvider, related_name="usuarios")
+    tipo_usuario = models.ManyToManyField(TipoUsuario, related_name="usuarios")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["nombres", "apellidos"]

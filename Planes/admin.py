@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import PlanInmuebles, PlanPrestamos, PlanServicios
 
-# Register your models here.
+admin.site.register(PlanInmuebles)
+admin.site.register(PlanPrestamos)
+admin.site.register(PlanServicios)
