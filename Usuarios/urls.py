@@ -4,19 +4,29 @@ from .views import (
     RegistrarUsuarioView,
     ListaTiposUsuariosView,
     AutenticarUsuarioGoogleView,
-    CSRFTokenView,
     WhoAmIView,
+    PerfilClienteView,
+    LoginEmailView,
 )
+from rest_framework_simplejwt.views import TokenRefreshView
 
 auth = DefaultRouter()
 tipos = DefaultRouter()
+perfiles = DefaultRouter()
+# Auth
 auth.register("email", RegistrarUsuarioView, basename="registrar con email")
 auth.register("google", AutenticarUsuarioGoogleView, basename="registrar con google")
+auth.register("login", LoginEmailView, basename="Iniciar sesión con email")
+# Tipos
 tipos.register("usuarios", ListaTiposUsuariosView)
 
+# Perfiles
+perfiles.register("cliente", PerfilClienteView)
+
 urlpatterns = [
-    path("csrf/", CSRFTokenView.as_view(), name="csrf"),
     path("whoami/", WhoAmIView.as_view(), name="whoami"),
     path("auth/", include(auth.urls)),
+    path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("tipos/", include(tipos.urls)),
+    path("perfiles/", include(perfiles.urls)),
 ]

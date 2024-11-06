@@ -46,7 +46,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 1em;
-  width: 100%;
+  min-width: 400px;
   background: #242424;
 }
 .google-div{
@@ -63,5 +63,12 @@ pre {
   background-color: #303030;
   color: #fff;
   border-radius: 0.5em;
-  overflow-x: auto;
+  overflow-x: hidden;
+  max-width: 200px;
+  min-width: 200px;
+}
+.div-pre {
+  display: flex;
+  width: 100%;
+  gap: 1em;
 }

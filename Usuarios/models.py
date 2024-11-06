@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from Planes.models import PlanInmuebles, PlanPrestamos, PlanServicios
 from Prestamos.models import EntidadBancaria
 from .manager import UserManager
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class AuthProvider(models.Model):
@@ -49,6 +50,10 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     @property
     def nombre_completo(self):
         return f"{self.nombres} {self.apellidos}"
+
+    def tokens(self):
+        refresh = RefreshToken.for_user(self)
+        return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
 
 class CodigoUnUso(models.Model):

@@ -1,5 +1,5 @@
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 const BASE_URL = "http://localhost:8000/";
 interface Usuario {
@@ -14,11 +14,17 @@ interface Usuario {
   tipo_usuario?: string[];
 }
 
-// interface GoogleCredentialResponse {
-//   credential: string;
-//   clientId: string;
-//   select_by: string;
-// }
+interface Tokens {
+  access: string;
+  refresh: string;
+}
+
+interface PerfilCliente {
+  dni: string;
+  perfil_cliente: {
+    telefono: string;
+  };
+}
 
 export default function App() {
   const [state, setState] = useState<Usuario>({
@@ -29,14 +35,17 @@ export default function App() {
     apellidos: "Aldana Ayasta",
     id_tipo_usuario: 7,
   });
-
-  useEffect(() => {
-    fetch(BASE_URL + "csrf/", {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => console.log(data));
-  }, []);
+  const [perfil, setPerfil] = useState<PerfilCliente>({
+    dni: "71448693",
+    perfil_cliente: {
+      telefono: "976065217",
+    },
+  });
+  const [data, setData] = useState({});
+  const [tokens, setTokens] = useState<Tokens>({
+    access: "",
+    refresh: "",
+  });
 
   const handleClick = () => {
     fetch(BASE_URL + "auth/email/", {
@@ -44,12 +53,11 @@ export default function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include",
       body: JSON.stringify(state),
     })
       .then((res) => res.json())
       .then((data) => {
-        setState(data);
+        setData(data);
         console.log(data);
       });
   };
@@ -61,7 +69,6 @@ export default function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include",
       body: JSON.stringify({
         credential,
         id_tipo_usuario: 7,
@@ -69,17 +76,42 @@ export default function App() {
     })
       .then((res) => res.json())
       .then((data) => {
-        setState(data);
-        console.log(data);
+        setData(data);
+        if (data.tokens) {
+          setTokens(data.tokens);
+        }
       });
   };
 
   const handleWhoAmI = () => {
     fetch(BASE_URL + "whoami/", {
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${tokens.access}`,
+      },
     })
       .then((res) => res.json())
-      .then((data) => console.log(data));
+      .then((data) => {
+        setData(data);
+        console.log(data);
+        console.log(state);
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const handlePerfil = () => {
+    fetch(BASE_URL + "perfiles/cliente/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(perfil),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        setData(data);
+      });
   };
 
   return (
@@ -132,14 +164,38 @@ export default function App() {
         logo_alignment="center"
         itp_support={true}
         size="large"
-        shape="rectangular"
+        shape="square"
         theme="filled_blue"
         ux_mode="popup"
         locale="es-PE"
         text="signin"
       ></GoogleLogin>
       <button onClick={handleWhoAmI}>Who Am I</button>
-      <pre>{JSON.stringify(state, null, 2)}</pre>
+      <div className="div-pre">
+        <pre>{JSON.stringify(data, null, 2)}</pre>
+        <pre>{JSON.stringify(tokens, null, 2)}</pre>
+      </div>
+      <input
+        type="text"
+        placeholder="dni"
+        value={perfil.dni}
+        onChange={(e) => setPerfil({ ...perfil, dni: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Telefono"
+        value={perfil.perfil_cliente.telefono}
+        onChange={(e) =>
+          setPerfil({
+            ...perfil,
+            perfil_cliente: {
+              ...perfil.perfil_cliente,
+              telefono: e.target.value,
+            },
+          })
+        }
+      />
+      <button onClick={handlePerfil}>Post</button>
     </div>
   );
 }
