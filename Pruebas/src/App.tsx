@@ -99,18 +99,19 @@ export default function App() {
   };
 
   const handlePerfil = () => {
+    console.log(perfil);
     fetch(BASE_URL + "perfiles/cliente/", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${tokens.access}`,
         "Content-Type": "application/json",
       },
-      credentials: "include",
       body: JSON.stringify(perfil),
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         setData(data);
+        console.log(data);
       });
   };
 

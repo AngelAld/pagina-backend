@@ -1,10 +1,13 @@
 from .serializers import (
-    RegistrarUsuarioSerializer,
+    OnlyMessageSerializer,
     TipoUsuarioSerializer,
+    RegistrarUsuarioSerializer,
+    LoginEmailSerializer,
     GoogleAuthSerializer,
     UsuarioClienteSerializer,
-    LoginEmailSerializer,
-    OnlyMessageSerializer,
+    UsuarioParticularInmueblesSerializer,
+    UsuarioInmobiliariaSerializer,
+    UsuarioEmpleadoInmobiliariaSerializer,
 )
 from .models import Usuario, TipoUsuario
 from rest_framework.permissions import AllowAny
@@ -42,7 +45,10 @@ class AutenticarUsuarioGoogleView(ModelViewSet):
     http_method_names = ["post"]
 
 
-class ListaTiposUsuariosView(ModelViewSet):
+class ListaTiposUsuariosView(
+    GenericViewSet,
+    ListModelMixin,
+):
     queryset = TipoUsuario.objects.all()
     serializer_class = TipoUsuarioSerializer
     permission_classes = [AllowAny]
@@ -75,3 +81,53 @@ class PerfilClienteView(
 
     def get_queryset(self):
         return Usuario.objects.filter(id=self.request.user.id)
+
+
+class PerfilParticularInmueblesView(
+    GenericViewSet,
+    ListModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+    CreateModelMixin,
+):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioParticularInmueblesSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "put", "delete"]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(id=self.request.user.id)
+
+
+class PerfilInmobiliariaView(
+    GenericViewSet,
+    ListModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+    CreateModelMixin,
+):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioInmobiliariaSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "put", "delete"]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(id=self.request.user.id)
+
+
+class PerfilEmpleadoInmobiliariaView(
+    GenericViewSet,
+    ListModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+    CreateModelMixin,
+):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioEmpleadoInmobiliariaSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "put", "delete"]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            perfil_inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+        )

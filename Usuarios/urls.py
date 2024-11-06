@@ -1,12 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    RegistrarUsuarioView,
-    ListaTiposUsuariosView,
-    AutenticarUsuarioGoogleView,
     WhoAmIView,
-    PerfilClienteView,
+    ListaTiposUsuariosView,
+    RegistrarUsuarioView,
     LoginEmailView,
+    AutenticarUsuarioGoogleView,
+    PerfilClienteView,
+    PerfilParticularInmueblesView,
+    PerfilInmobiliariaView,
+    PerfilEmpleadoInmobiliariaView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -22,6 +25,19 @@ tipos.register("usuarios", ListaTiposUsuariosView)
 
 # Perfiles
 perfiles.register("cliente", PerfilClienteView)
+perfiles.register(
+    "particular-inmuebles",
+    PerfilParticularInmueblesView,
+    basename="perfil-particular-inmuebles",
+)
+perfiles.register(
+    "inmobiliaria", PerfilInmobiliariaView, basename="perfil-inmobiliaria"
+)
+perfiles.register(
+    "empleado-inmobiliaria",
+    PerfilEmpleadoInmobiliariaView,
+    basename="perfil-empleado-inmobiliaria",
+)
 
 urlpatterns = [
     path("whoami/", WhoAmIView.as_view(), name="whoami"),

@@ -13,6 +13,9 @@ class PlanInmuebles(models.Model):
     max_alertas = models.PositiveIntegerField()
     compartir_comision = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.nombre
+
 
 class PlanPrestamos(models.Model):
     nombre = models.CharField(max_length=255)
@@ -23,6 +26,9 @@ class PlanPrestamos(models.Model):
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     max_clientes = models.PositiveIntegerField()
     max_alertas = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.nombre
 
 
 class PlanServicios(models.Model):
@@ -36,3 +42,6 @@ class PlanServicios(models.Model):
     max_habilidades = models.PositiveIntegerField()
     max_avisos = models.PositiveIntegerField()
     max_alertas = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.nombre

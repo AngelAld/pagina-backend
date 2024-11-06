@@ -1,7 +1,17 @@
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 from Usuarios.util import enviar_correo_otp
-from .models import AuthProvider, PerfilCliente, Usuario, TipoUsuario
+from .models import (
+    AuthProvider,
+    PerfilCliente,
+    Usuario,
+    TipoUsuario,
+    PerfilParticularInmuebles,
+    PerfilInmobiliaria,
+    PerfilAgentePrestamos,
+    PerfilEmpleadoInmobiliaria,
+    PerfilProfesionalServicios,
+)
 from django.contrib.auth.password_validation import validate_password
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -9,6 +19,11 @@ from Api.settings import GOOGLE_CLIENT_ID
 from django.contrib.auth import login
 from django.db.transaction import atomic
 from django.contrib.auth import authenticate
+from Planes.models import PlanInmuebles, PlanPrestamos, PlanServicios
+
+
+class OnlyMessageSerializer(serializers.Serializer):
+    message = serializers.CharField()
 
 
 class TipoUsuarioSerializer(serializers.ModelSerializer):
@@ -233,12 +248,188 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         usuario: Usuario = self.context.get("request").user
         dni = validated_data.pop("dni")
+        plan_inmuebles = PlanInmuebles.objects.get(nombre="Plan Cliente")
+        plan_prestamos = PlanPrestamos.objects.get(nombre="Plan Cliente")
         usuario.dni = dni
         perfil_data = validated_data.pop("perfil_cliente")
-        perfil = PerfilCliente.objects.create(usuario=usuario, **perfil_data)
+        perfil = PerfilCliente.objects.create(
+            usuario=usuario,
+            plan_inmuebles=plan_inmuebles,
+            plan_prestamos=plan_prestamos,
+            **perfil_data,
+        )
         usuario.save()
-        return perfil
+        return usuario
 
 
-class OnlyMessageSerializer(serializers.Serializer):
-    message = serializers.CharField()
+class PerfilParticularInmueblesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilParticularInmuebles
+        fields = ["telefono", "plan"]
+
+
+class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
+    perfil_particular = PerfilParticularInmueblesSerializer()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "is_verified",
+            "tipo_usuario",
+            "perfil_particular",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "tipo_usuario",
+        ]
+
+    def validate(self, attrs):
+        usuario: Usuario = self.context.get("request").user
+        if usuario is None:
+            raise ValidationError("No se ha iniciado sesión")
+        if hasattr(usuario, "perfil_particular"):
+            raise ValidationError("Ya tienes un perfil de inmuebles")
+        return attrs
+
+    @atomic
+    def create(self, validated_data):
+        usuario: Usuario = self.context.get("request").user
+        dni = validated_data.pop("dni")
+        usuario.dni = dni
+        perfil_data = validated_data.pop("perfil_particular")
+        perfil = PerfilParticularInmuebles.objects.create(
+            usuario=usuario,
+            **perfil_data,
+        )
+        usuario.save()
+        return usuario
+
+
+class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilInmobiliaria
+        fields = [
+            "avatar",
+            "razon_social",
+            "ruc",
+            "telefono",
+            "aprobada",
+        ]
+
+        read_only_fields = [
+            "aprobada",
+        ]
+
+
+class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
+    perfil_inmobiliaria = PerfilInmobiliariaSerializer()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "is_verified",
+            "tipo_usuario",
+            "perfil_inmobiliaria",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "tipo_usuario",
+        ]
+
+    def validate(self, attrs):
+        usuario: Usuario = self.context.get("request").user
+        if usuario is None:
+            raise ValidationError("No se ha iniciado sesión")
+        if hasattr(usuario, "perfil_inmobiliaria"):
+            raise ValidationError("Ya tienes un perfil de inmobiliaria")
+        return attrs
+
+    @atomic
+    def create(self, validated_data):
+        usuario: Usuario = self.context.get("request").user
+        dni = validated_data.pop("dni")
+        plan = PlanInmuebles.objects.get(nombre="Plan Inmobiliaria")
+        usuario.dni = dni
+        perfil_data = validated_data.pop("perfil_inmobiliaria")
+        perfil = PerfilInmobiliaria.objects.create(
+            usuario=usuario,
+            plan=plan,
+            **perfil_data,
+        )
+        usuario.save()
+        return usuario
+
+
+class PerfilEmpleadoInmobiliaria(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilEmpleadoInmobiliaria
+        fields = [
+            "avatar",
+            "telefono",
+        ]
+
+
+class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
+    perfil_empleado = PerfilEmpleadoInmobiliaria()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "password",
+            "nombres",
+            "apellidos",
+            "dni",
+            "tipo_usuario",
+            "perfil_empleado",
+        ]
+        read_only_fields = [
+            "id",
+            "is_verified",
+            "tipo_usuario",
+        ]
+
+    def validate(self, attrs):
+        usuario: Usuario = self.context.get("request").user
+        if usuario is None:
+            raise ValidationError("No se ha iniciado sesión")
+        if not hasattr(usuario, "perfil_inmobiliaria"):
+            raise ValidationError("No tienes un perfil de inmobiliaria")
+
+    @atomic
+    def create(self, validated_data):
+        inmobiliaria = self.context.get("request").user.perfil_inmobiliaria
+        perfil_data = validated_data.pop("perfil_empleado")
+        tipo_usuario = TipoUsuario.objects.get(nombre="Empleado Inmobiliaria")
+        password = validated_data.pop("password")
+        usuario = Usuario.objects.create(
+            **validated_data,
+        )
+        usuario.set_password(password)
+        usuario.tipo_usuario.add(tipo_usuario)
+        PerfilEmpleadoInmobiliaria.objects.create(
+            usuario=usuario,
+            inmobiliaria=inmobiliaria,
+            **perfil_data,
+        )
+        usuario.save()
+        return usuario
