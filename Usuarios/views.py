@@ -1,3 +1,4 @@
+from Usuarios.util import UserViewSet
 from .serializers import (
     OnlyMessageSerializer,
     TipoUsuarioSerializer,
@@ -8,13 +9,13 @@ from .serializers import (
     UsuarioParticularInmueblesSerializer,
     UsuarioInmobiliariaSerializer,
     UsuarioEmpleadoInmobiliariaSerializer,
+    UsuarioAgentePrestamosSerializer,
+    UsuarioProfesionalServiciosSerializer,
 )
 from .models import Usuario, TipoUsuario
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.response import Response
-from django.middleware.csrf import get_token
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.mixins import (
     CreateModelMixin,
@@ -22,6 +23,7 @@ from rest_framework.mixins import (
     UpdateModelMixin,
     DestroyModelMixin,
 )
+from rest_framework.generics import GenericAPIView
 
 
 class RegistrarUsuarioView(ModelViewSet):
@@ -55,7 +57,7 @@ class ListaTiposUsuariosView(
     http_method_names = ["get"]
 
 
-class WhoAmIView(APIView):
+class WhoAmIView(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OnlyMessageSerializer
 
@@ -67,29 +69,21 @@ class WhoAmIView(APIView):
         )
 
 
-class PerfilClienteView(
-    GenericViewSet,
-    ListModelMixin,
-    UpdateModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
-):
+class PerfilClienteView(UserViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioClienteSerializer
+    lookup_field = "id"
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
+
+    def get_object(self):
+        pass
 
     def get_queryset(self):
         return Usuario.objects.filter(id=self.request.user.id)
 
 
-class PerfilParticularInmueblesView(
-    GenericViewSet,
-    ListModelMixin,
-    UpdateModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
-):
+class PerfilParticularInmueblesView(UserViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioParticularInmueblesSerializer
     permission_classes = [IsAuthenticated]
@@ -99,13 +93,7 @@ class PerfilParticularInmueblesView(
         return Usuario.objects.filter(id=self.request.user.id)
 
 
-class PerfilInmobiliariaView(
-    GenericViewSet,
-    ListModelMixin,
-    UpdateModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
-):
+class PerfilInmobiliariaView(UserViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioInmobiliariaSerializer
     permission_classes = [IsAuthenticated]
@@ -115,15 +103,33 @@ class PerfilInmobiliariaView(
         return Usuario.objects.filter(id=self.request.user.id)
 
 
-class PerfilEmpleadoInmobiliariaView(
-    GenericViewSet,
-    ListModelMixin,
-    UpdateModelMixin,
-    DestroyModelMixin,
-    CreateModelMixin,
-):
+class PerfilEmpleadoInmobiliariaView(UserViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioEmpleadoInmobiliariaSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "put", "delete"]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            perfil_inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+        )
+
+
+class PerfilAgentePrestamosView(UserViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioAgentePrestamosSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "put", "delete"]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            perfil_inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+        )
+
+
+class PerfilProfesionalServiciosView(UserViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioProfesionalServiciosSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
 

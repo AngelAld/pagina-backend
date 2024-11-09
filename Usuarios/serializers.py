@@ -214,6 +214,7 @@ class PerfilClienteSerializer(serializers.ModelSerializer):
 
 class UsuarioClienteSerializer(serializers.ModelSerializer):
     perfil_cliente = PerfilClienteSerializer()
+    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
 
     class Meta:
         model = Usuario
@@ -240,25 +241,47 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
         usuario: Usuario = self.context.get("request").user
         if usuario is None:
             raise ValidationError("No se ha iniciado sesión")
-        if hasattr(usuario, "perfil_cliente"):
-            raise ValidationError("Ya tienes un perfil de cliente")
         return attrs
 
     @atomic
     def create(self, validated_data):
         usuario: Usuario = self.context.get("request").user
+        if hasattr(usuario, "perfil_cliente"):
+            raise ValidationError("Ya tienes un perfil de cliente")
         dni = validated_data.pop("dni")
         plan_inmuebles = PlanInmuebles.objects.get(nombre="Plan Cliente")
         plan_prestamos = PlanPrestamos.objects.get(nombre="Plan Cliente")
+        tipo_usuario = TipoUsuario.objects.get(nombre="Cliente")
         usuario.dni = dni
+        usuario.tipo_usuario.add(tipo_usuario)
         perfil_data = validated_data.pop("perfil_cliente")
-        perfil = PerfilCliente.objects.create(
+        PerfilCliente.objects.create(
             usuario=usuario,
             plan_inmuebles=plan_inmuebles,
             plan_prestamos=plan_prestamos,
             **perfil_data,
         )
         usuario.save()
+        return usuario
+
+    @atomic
+    def update(self, instance, validated_data):
+        print(validated_data)
+        usuario: Usuario = instance
+        if not hasattr(usuario, "perfil_cliente"):
+            raise ValidationError("No tienes un perfil de cliente")
+        dni = validated_data.pop("dni")
+        plan_inmuebles = PlanInmuebles.objects.get(nombre="Plan Cliente")
+        plan_prestamos = PlanPrestamos.objects.get(nombre="Plan Cliente")
+        usuario.dni = dni
+        perfil_data = validated_data.pop("perfil_cliente")
+        perfil_cliente = PerfilCliente.objects.get(usuario=usuario)
+        perfil_cliente.plan_inmuebles = plan_inmuebles
+        perfil_cliente.plan_prestamos = plan_prestamos
+        perfil_cliente.telefono = perfil_data.get("telefono")
+        perfil_cliente.save()
+        usuario.save()
+        perfil_cliente.refresh_from_db()
         return usuario
 
 
@@ -306,11 +329,14 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
         dni = validated_data.pop("dni")
         usuario.dni = dni
         perfil_data = validated_data.pop("perfil_particular")
-        perfil = PerfilParticularInmuebles.objects.create(
+        PerfilParticularInmuebles.objects.create(
             usuario=usuario,
             **perfil_data,
         )
         usuario.save()
+        PerfilParticularInmuebles.objects.update(
+            usuario=usuario,
+        )
         return usuario
 
 
@@ -323,6 +349,7 @@ class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
             "ruc",
             "telefono",
             "aprobada",
+            "plan",
         ]
 
         read_only_fields = [
@@ -366,12 +393,11 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         usuario: Usuario = self.context.get("request").user
         dni = validated_data.pop("dni")
-        plan = PlanInmuebles.objects.get(nombre="Plan Inmobiliaria")
+
         usuario.dni = dni
         perfil_data = validated_data.pop("perfil_inmobiliaria")
         perfil = PerfilInmobiliaria.objects.create(
             usuario=usuario,
-            plan=plan,
             **perfil_data,
         )
         usuario.save()
@@ -429,6 +455,112 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         PerfilEmpleadoInmobiliaria.objects.create(
             usuario=usuario,
             inmobiliaria=inmobiliaria,
+            **perfil_data,
+        )
+        usuario.save()
+        return usuario
+
+
+class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilAgentePrestamos
+        fields = ["telefono", "plan", "entidad"]
+
+
+class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
+    perfil_agente = PerfilAgentePrestamosSerializer()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "is_verified",
+            "tipo_usuario",
+            "perfil_agente",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "tipo_usuario",
+        ]
+
+    def validate(self, attrs):
+        usuario: Usuario = self.context.get("request").user
+        if usuario is None:
+            raise ValidationError("No se ha iniciado sesión")
+        if hasattr(usuario, "perfil_agente"):
+            raise ValidationError("Ya tienes un perfil de agente de prestamos")
+        return attrs
+
+    @atomic
+    def create(self, validated_data):
+        usuario: Usuario = self.context.get("request").user
+        dni = validated_data.pop("dni")
+
+        usuario.dni = dni
+        perfil_data = validated_data.pop("perfil_agente")
+        PerfilAgentePrestamos.objects.create(
+            usuario=usuario,
+            **perfil_data,
+        )
+        usuario.save()
+        return usuario
+
+
+class PerfilProfesionalServicios(serializers.ModelSerializer):
+    class Meta:
+        model = PerfilProfesionalServicios
+        fields = ["telefono", "plan"]
+
+
+class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
+    perfil_profesional = PerfilProfesionalServicios()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "is_verified",
+            "tipo_usuario",
+            "perfil_profesional",
+        ]
+        read_only_fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "tipo_usuario",
+        ]
+
+    def validate(self, attrs):
+        usuario: Usuario = self.context.get("request").user
+        if usuario is None:
+            raise ValidationError("No se ha iniciado sesión")
+        if hasattr(usuario, "perfil_profesional"):
+            raise ValidationError("Ya tienes un perfil de profesional de servicios")
+        return attrs
+
+    @atomic
+    def create(self, validated_data):
+        usuario: Usuario = self.context.get("request").user
+        dni = validated_data.pop("dni")
+
+        usuario.dni = dni
+        perfil_data = validated_data.pop("perfil_profesional")
+        PerfilProfesionalServicios.objects.create(
+            usuario=usuario,
             **perfil_data,
         )
         usuario.save()
