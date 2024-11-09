@@ -7,7 +7,7 @@
   - [ ] Profesional de servicios
   - [ ] Materiales/productos
 
-- [ ] Servicios nuevos
+- [ ] Servicios nuevos con pago presencial
   - [ ] Planos
   - [ ] Presupuestado
   - [ ] Construcción
@@ -20,3 +20,5 @@
   - [ ] Política de privacidad
   - [ ] Trabajos de profesionales
   - [ ] Fotos de inmuebles
+
+- [ ] Flujo de compra de un servicio
