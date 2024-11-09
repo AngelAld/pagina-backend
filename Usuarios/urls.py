@@ -28,6 +28,27 @@ tipos.register("usuarios", ListaTiposUsuariosView)
 
 perfiles = [
     path("cliente/", PerfilClienteView.as_view(), name="perfil cliente"),
+    path(
+        "particular-inmuebles/",
+        PerfilParticularInmueblesView.as_view(),
+        name="perfil particular inmuebles",
+    ),
+    path("inmobiliaria/", PerfilInmobiliariaView.as_view(), name="perfil inmobiliaria"),
+    path(
+        "empleado-inmobiliaria/",
+        PerfilEmpleadoInmobiliariaView.as_view(),
+        name="perfil empleado inmobiliaria",
+    ),
+    path(
+        "agente-prestamos/",
+        PerfilAgentePrestamosView.as_view(),
+        name="perfil agente prestamos",
+    ),
+    path(
+        "profesional-servicios/",
+        PerfilProfesionalServiciosView.as_view(),
+        name="perfil profesional servicios",
+    ),
 ]
 
 
