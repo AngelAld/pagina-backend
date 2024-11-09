@@ -464,7 +464,7 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
 class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilAgentePrestamos
-        fields = ["telefono", "plan", "entidad"]
+        fields = ["avatar", "telefono", "plan", "entidad"]
 
 
 class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):

@@ -131,7 +131,7 @@ class PerfilAgentePrestamos(models.Model):
     usuario = models.OneToOneField(
         Usuario, on_delete=models.CASCADE, related_name="perfil_agente"
     )
-
+    avatar = models.ImageField(upload_to="avatar/agentes", null=True, blank=True)
     telefono = models.CharField(max_length=9)
     plan = models.ForeignKey(PlanPrestamos, on_delete=models.PROTECT)
     entidad = models.ForeignKey(EntidadBancaria, on_delete=models.PROTECT)
