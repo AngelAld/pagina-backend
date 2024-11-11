@@ -12,7 +12,7 @@ class Command(BaseCommand):
             defaults={
                 "descripcion": "Plan basico para clientes",
                 "precio": 0,
-                "max_propiedades": 0,
+                "max_inmuebles": 0,
                 "max_empleados": 0,
                 "max_alertas": 3,
                 "compartir_comision": False,
@@ -26,7 +26,7 @@ class Command(BaseCommand):
             defaults={
                 "descripcion": "Plan basico para particulares",
                 "precio": 0,
-                "max_propiedades": 5,
+                "max_inmuebles": 5,
                 "max_empleados": 0,
                 "max_alertas": 3,
                 "compartir_comision": False,
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             defaults={
                 "descripcion": "Plan basico para inmobiliarias",
                 "precio": 0,
-                "max_propiedades": 100,
+                "max_inmuebles": 100,
                 "max_empleados": 5,
                 "max_alertas": 10,
                 "compartir_comision": True,
@@ -50,7 +50,7 @@ class Command(BaseCommand):
             defaults={
                 "descripcion": "Plan basico para agentes inmobiliarios",
                 "precio": 0,
-                "max_propiedades": 10,
+                "max_inmuebles": 10,
                 "max_empleados": 0,
                 "max_alertas": 5,
                 "compartir_comision": True,
