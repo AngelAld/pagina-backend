@@ -33,13 +33,13 @@ class TipoInmueble(models.Model):
 class SubTipoInmueble(models.Model):
     nombre = models.CharField(max_length=50)
     descripcion = models.TextField(null=True, blank=True)
-    tipo_Inmueble = models.ForeignKey(TipoInmueble, on_delete=models.PROTECT)
+    tipo_inmueble = models.ForeignKey(TipoInmueble, on_delete=models.PROTECT)
 
     def __str__(self):
         return self.nombre
 
 
-class Estado(models.Model):
+class EstadoInmueble(models.Model):
     nombre = models.CharField(max_length=50)
     descripcion = models.TextField(null=True, blank=True)
 
@@ -70,7 +70,7 @@ class Inmueble(models.Model):
     tipo_operacion = models.ForeignKey(TipoOperacion, on_delete=models.PROTECT)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
-    estado = models.ForeignKey(Estado, on_delete=models.PROTECT)
+    estado = models.ForeignKey(EstadoInmueble, on_delete=models.PROTECT)
     habitaciones = models.PositiveIntegerField(blank=True, null=True, default=0)
     baños = models.PositiveIntegerField(blank=True, null=True, default=0)
     pisos = models.PositiveIntegerField(blank=True, null=True, default=1)
@@ -95,24 +95,32 @@ class Inmueble(models.Model):
         TipoAntiguedad, on_delete=models.PROTECT, blank=True, null=True
     )
     años = models.PositiveIntegerField(blank=True, null=True, default=0)
-    tipo_Inmueble = models.ForeignKey(
+    tipo_inmueble = models.ForeignKey(
         TipoInmueble,
         on_delete=models.PROTECT,
         blank=True,
         null=True,
     )
-    subtipo_Inmueble = models.ForeignKey(
+    subtipo_inmueble = models.ForeignKey(
         SubTipoInmueble, on_delete=models.PROTECT, blank=True, null=True
     )
     caracteristicas = models.ManyToManyField(Caracteristica, blank=True)
 
     @property
     def portada(self):
-        return ImagenInmueble.objects.filter(Inmueble=self, portada=True).first()
+        return (
+            ImagenInmueble.objects.filter(inmueble=self, is_portada=True)
+            .first()
+            .imagen.url
+        )
 
     @property
-    def getFavoritos(self):
+    def num_favoritos(self):
         return self.favoritos.count()
+
+    @property
+    def num_visitas(self):
+        return self.visitas.count()
 
     def save(self, **kwargs):
         slug_base = slugify(self.titulo or "Inmueble")
@@ -133,19 +141,19 @@ class Inmueble(models.Model):
 
 class ImagenInmueble(models.Model):
     indice = models.PositiveIntegerField(default=0)
-    Inmueble = models.ForeignKey(
+    inmueble = models.ForeignKey(
         Inmueble, on_delete=models.CASCADE, related_name="imagenes"
     )
-    imagen = models.ImageField(upload_to="Inmueblees/")
+    imagen = models.ImageField(upload_to="inmuebles/")
     titulo = models.CharField(max_length=100, blank=True)
-    portada = models.BooleanField(default=False)
+    is_portada = models.BooleanField(default=False)
 
     def __str__(self):
         return self.imagen.url
 
 
 class PlanoInmueble(models.Model):
-    Inmueble = models.ForeignKey(
+    inmueble = models.ForeignKey(
         Inmueble, on_delete=models.CASCADE, related_name="planos"
     )
     plano = models.ImageField(upload_to="planos/")
@@ -156,20 +164,42 @@ class PlanoInmueble(models.Model):
 
 
 class UbicacionInmueble(models.Model):
-    Inmueble = models.OneToOneField(
+    inmueble = models.OneToOneField(
         Inmueble, on_delete=models.CASCADE, related_name="ubicacion"
     )
     distrito = models.ForeignKey(Distrito, on_delete=models.PROTECT)
-    calle_numero = models.CharField(max_length=100)
+    calle = models.CharField(max_length=100)
+    numero = models.CharField(max_length=10)
     latitud = models.FloatField()
     longitud = models.FloatField()
-
-    @property
-    def direccion(self):
-        return f"{self.distrito.provincia.nombre}, {self.distrito.nombre}"
 
     def __str__(self):
         return f"{self.distrito}, {self.calle_numero}"
 
 
-# TODO: Alertas
+# TODO: Modelo de alertas
+
+
+class Favorito(models.Model):
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.CASCADE, related_name="favoritos"
+    )
+    inmueble = models.ForeignKey(
+        Inmueble, on_delete=models.CASCADE, related_name="favoritos"
+    )
+
+    def __str__(self):
+        return f"{self.usuario} - {self.inmueble}"
+
+
+class Visita(models.Model):
+    usuario = models.ForeignKey(
+        Usuario, on_delete=models.CASCADE, related_name="visitas"
+    )
+    inmueble = models.ForeignKey(
+        Inmueble, on_delete=models.CASCADE, related_name="visitas"
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.usuario} - {self.inmueble} - {self.fecha}"

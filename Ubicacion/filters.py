@@ -11,8 +11,8 @@ class ProvinciaFilter(FilterSet):
         fields = ["departamento"]
 
     def filter_departamento(self, queryset, name, value):
-        pks = value.split(",")
-        queryset = queryset.filter(departamento__pk__in=pks)
+        nombres = value.split(",")
+        queryset = queryset.filter(departamento__nombre__in=nombres)
         return queryset
 
 
@@ -25,6 +25,6 @@ class DistritoFilter(FilterSet):
         fields = ["nombre", "provincia"]
 
     def filter_provincia(self, queryset, name, value):
-        pks = value.split(",")
-        queryset = queryset.filter(provincia__pk__in=pks)
+        nombres = value.split(",")
+        queryset = queryset.filter(provincia__nombre__in=nombres)
         return queryset
