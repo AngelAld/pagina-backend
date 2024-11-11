@@ -8,7 +8,7 @@ class PlanInmuebles(models.Model):
         null=True,
     )
     precio = models.DecimalField(max_digits=10, decimal_places=2)
-    max_propiedades = models.PositiveIntegerField()
+    max_inmuebles = models.PositiveIntegerField()
     max_empleados = models.PositiveIntegerField()
     max_alertas = models.PositiveIntegerField()
     compartir_comision = models.BooleanField(default=False)
