@@ -31,10 +31,11 @@ INSTALLED_APPS = (
         "django.contrib.messages",
         "django.contrib.staticfiles",
     ]
-    + [  # dependencias
+    + [
         "rest_framework",
         "drf_spectacular",
-    ]
+        "django_filters",
+    ]  # dependencias
     + [
         "Inmuebles",
         "Planes",

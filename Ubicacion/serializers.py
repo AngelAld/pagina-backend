@@ -17,6 +17,7 @@ class ProvinciaSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "nombre",
+            "departamento",
         ]
 
 
@@ -26,4 +27,5 @@ class DistritoSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "nombre",
+            "provincia",
         ]
