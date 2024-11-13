@@ -167,9 +167,8 @@ SOCIAL_AUTH_PASSWORD = env("SOCIAL_AUTH_PASSWORD")
 
 # Cors
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost",
-    "http://localhost:5173",
-    "https://mova-six.vercel.app/",
+    "http://localhost:3000",
+    "https://pagina-frontend.vercel.app/",
 ]
 # CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 # CORS_ALLOW_CREDENTIALS = True
