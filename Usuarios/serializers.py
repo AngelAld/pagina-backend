@@ -93,7 +93,10 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
     credential = serializers.CharField(write_only=True)
     tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
     id_tipo_usuario = serializers.PrimaryKeyRelatedField(
-        queryset=TipoUsuario.objects.all(), write_only=True, source="tipo_usuario"
+        queryset=TipoUsuario.objects.all(),
+        write_only=True,
+        source="tipo_usuario",
+        required=False,
     )
     tokens = TokenSerializer(read_only=True)
 
@@ -138,7 +141,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         credential = validated_data.get("credential")
         request = self.context.get("request")
         google_user_data = id_token.verify_oauth2_token(credential, requests.Request())
-        tipo_usuario = validated_data.pop("tipo_usuario")
+        tipo_usuario = validated_data.pop("tipo_usuario", None)
         email = google_user_data.get("email")
         nombres = google_user_data.get("given_name")
         apellidos = google_user_data.get("family_name")
@@ -151,6 +154,8 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
             },
         )
         if created:
+            if not tipo_usuario:
+                tipo_usuario = TipoUsuario.objects.get(nombre="Cliente")
             usuario.tipo_usuario.add(tipo_usuario)
         provider = AuthProvider.objects.get(nombre="google")
         usuario.provider.add(provider)

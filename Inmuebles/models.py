@@ -174,7 +174,7 @@ class UbicacionInmueble(models.Model):
     longitud = models.FloatField()
 
     def __str__(self):
-        return f"{self.distrito}, {self.calle_numero}"
+        return f"{self.distrito}, {self.calle} {self.numero}"
 
 
 # TODO: Modelo de alertas
