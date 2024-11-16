@@ -121,6 +121,11 @@ class InmuebleSerializer(serializers.ModelSerializer):
 
 
 class InmuebleListSerializer(serializers.ModelSerializer):
+    tipo_operacion = serializers.StringRelatedField()
+    estado = serializers.StringRelatedField()
+    tipo_antiguedad = serializers.StringRelatedField()
+
+    subtipo_inmueble = serializers.StringRelatedField()
 
     portada = serializers.StringRelatedField(allow_null=True)
 
