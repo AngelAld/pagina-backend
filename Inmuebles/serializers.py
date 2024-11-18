@@ -124,10 +124,11 @@ class InmuebleListSerializer(serializers.ModelSerializer):
     tipo_operacion = serializers.StringRelatedField()
     estado = serializers.StringRelatedField()
     tipo_antiguedad = serializers.StringRelatedField()
-
     subtipo_inmueble = serializers.StringRelatedField()
-
     portada = serializers.StringRelatedField(allow_null=True)
+    ubicacion = serializers.StringRelatedField(
+        source="ubicacion.distrito", allow_null=True
+    )
 
     class Meta:
         model = Inmueble
@@ -147,6 +148,7 @@ class InmuebleListSerializer(serializers.ModelSerializer):
             "portada",
             "num_favoritos",
             "num_visitas",
+            "ubicacion",
         ]
 
 
