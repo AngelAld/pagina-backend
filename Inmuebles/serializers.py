@@ -1,4 +1,7 @@
 from rest_framework import serializers
+
+from Ubicacion.serializers import DistritoSerializer
+from Usuarios.models import Usuario
 from .models import (
     Caracteristica,
     TipoAntiguedad,
@@ -17,7 +20,6 @@ class CaracteristicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Caracteristica
         fields = [
-            "id",
             "nombre",
             "descripcion",
         ]
@@ -74,52 +76,6 @@ class TipoOperacionSerializer(serializers.ModelSerializer):
         ]
 
 
-class InmuebleSerializer(serializers.ModelSerializer):
-    caracteristicas = CaracteristicaSerializer(many=True)
-
-    class Meta:
-        model = Inmueble
-        fields = [
-            "id",
-            "dueño",
-            "titulo",
-            "slug",
-            "descripcion",
-            "tipo_operacion",
-            "fecha_creacion",
-            "fecha_actualizacion",
-            "estado",
-            "habitaciones",
-            "baños",
-            "pisos",
-            "ascensores",
-            "estacionamientos",
-            "area_construida",
-            "area_total",
-            "precio_soles",
-            "precio_dolares",
-            "mantenimiento",
-            "tipo_antiguedad",
-            "años",
-            "tipo_inmueble",
-            "subtipo_inmueble",
-            "caracteristicas",
-            "portada",
-            "num_favoritos",
-            "num_visitas",
-        ]
-        read_only_fields = [
-            "portada",
-            "dueño",
-            "slug",
-            "fecha_creacion",
-            "fecha_actualizacion",
-            "num_favoritos",
-            "num_visitas",
-            "estado",
-        ]
-
-
 class InmuebleListSerializer(serializers.ModelSerializer):
     tipo_operacion = serializers.StringRelatedField()
     estado = serializers.StringRelatedField()
@@ -156,9 +112,7 @@ class ImagenInmuebleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImagenInmueble
         fields = [
-            "id",
             "indice",
-            "inmueble",
             "imagen",
             "titulo",
             "is_portada",
@@ -169,22 +123,95 @@ class PlanoInmuebleSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanoInmueble
         fields = [
-            "id",
-            "inmueble",
-            "imagen",
+            "plano",
             "titulo",
         ]
 
 
 class UbicacionInmuebleSerializer(serializers.ModelSerializer):
+    distrito = DistritoSerializer()
+
     class Meta:
         model = UbicacionInmueble
         fields = [
-            "id",
-            "inmueble",
             "distrito",
             "calle",
             "numero",
             "latitud",
             "longitud",
+        ]
+
+
+class DueñoSerializer(serializers.ModelSerializer):
+
+    nombre = serializers.SerializerMethodField()
+    telefono = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Usuario
+        fields = ["nombre", "email", "telefono"]
+
+    def get_nombre(self, obj):
+        if hasattr(obj, "perfil_particular"):
+            return obj.perfil_particular.usuario.nombre_completo
+        elif hasattr(obj, "perfil_empleado"):
+            return obj.perfil_empleado.inmobiliaria.razon_social
+        elif hasattr(obj, "perfil_inmobiliaria"):
+            return obj.perfil_inmobiliaria.razon_social
+        else:
+            return None
+
+    def get_telefono(self, obj):
+        if hasattr(obj, "perfil_particular"):
+            return obj.perfil_particular.telefono
+        elif hasattr(obj, "perfil_empleado"):
+            return obj.perfil_empleado.inmobiliaria.telefono
+        elif hasattr(obj, "perfil_inmobiliaria"):
+            return obj.perfil_inmobiliaria.telefono
+        else:
+            return None
+
+
+class InmuebleDetalleSerializer(serializers.ModelSerializer):
+    dueño = DueñoSerializer()
+    tipo_operacion = serializers.StringRelatedField()
+    estado = serializers.StringRelatedField()
+    tipo_antiguedad = serializers.StringRelatedField()
+    subtipo_inmueble = serializers.StringRelatedField()
+    ubicacion = UbicacionInmuebleSerializer()
+    caracteristicas = serializers.StringRelatedField(many=True)
+    imagenes = ImagenInmuebleSerializer(many=True)
+    planos = PlanoInmuebleSerializer(many=True)
+
+    class Meta:
+        model = Inmueble
+        fields = [
+            "dueño",
+            "titulo",
+            "slug",
+            "descripcion",
+            "tipo_operacion",
+            "fecha_actualizacion",
+            "estado",
+            "habitaciones",
+            "baños",
+            "pisos",
+            "ascensores",
+            "estacionamientos",
+            "area_construida",
+            "area_total",
+            "precio_soles",
+            "precio_dolares",
+            "mantenimiento",
+            "tipo_antiguedad",
+            "años",
+            "tipo_inmueble",
+            "subtipo_inmueble",
+            "portada",
+            "num_favoritos",
+            "num_visitas",
+            "ubicacion",
+            "caracteristicas",
+            "imagenes",
+            "planos",
         ]

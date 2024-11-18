@@ -8,17 +8,19 @@ from .views import (
     EstadoInmuebleViewSet,
     TipoOperacionViewSet,
     InmuebleListaViewSet,
+    InmuebleDetalleViewSet,
 )
 
 router = DefaultRouter()
 
 router.register(r"caracteristicas", CaracteristicaViewSet)
-router.register(r"tipo_antiguedades", TipoAntiguedadViewSet)
-router.register(r"tipo_inmuebles", TipoInmuebleViewSet)
-router.register(r"sub_tipo_inmuebles", SubTipoInmuebleViewSet)
-router.register(r"estado_inmuebles", EstadoInmuebleViewSet)
-router.register(r"tipo_operaciones", TipoOperacionViewSet)
+router.register(r"tipo-antiguedades", TipoAntiguedadViewSet)
+router.register(r"tipo-inmuebles", TipoInmuebleViewSet)
+router.register(r"sub-tipo-inmuebles", SubTipoInmuebleViewSet)
+router.register(r"estado-inmuebles", EstadoInmuebleViewSet)
+router.register(r"tipo-operaciones", TipoOperacionViewSet)
 router.register(r"avisos", InmuebleListaViewSet)
+router.register(r"aviso-detalle", InmuebleDetalleViewSet, basename="aviso-detalle")
 
 
 urlpatterns = [
