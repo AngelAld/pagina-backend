@@ -20,6 +20,7 @@ class CaracteristicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Caracteristica
         fields = [
+            "id",
             "nombre",
             "descripcion",
         ]

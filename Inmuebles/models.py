@@ -7,7 +7,7 @@ from django.utils.text import slugify
 
 # Create your models here.
 class Caracteristica(models.Model):
-    nombre = models.CharField(max_length=50)
+    nombre = models.CharField(max_length=50, unique=True)
     descripcion = models.TextField(null=True, blank=True)
 
     def __str__(self):

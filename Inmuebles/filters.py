@@ -46,14 +46,14 @@ class InmuebleFilterSet(FilterSet):
         ]
 
     def filter_caracteristicas(self, queryset, name, value):
-        nombres = value.split(",")
+        pks = value.split(",")
         queryset = queryset.annotate(
             num_caracteristicas=Count(
                 "caracteristicas",
-                filter=Q(caracteristicas__nombre__in=nombres),
+                filter=Q(caracteristicas__pk__in=pks),
             )
         )
-        filtered_queryset = queryset.filter(num_caracteristicas=len(nombres)).distinct()
+        filtered_queryset = queryset.filter(num_caracteristicas=len(pks)).distinct()
         return filtered_queryset
 
     def filter_distrito(self, queryset, name, value):

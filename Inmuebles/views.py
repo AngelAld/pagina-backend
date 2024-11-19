@@ -97,6 +97,9 @@ class InmuebleListaViewSet(ListModelMixin, GenericViewSet):
         "tipo_antiguedad__nombre",
         "subtipo_inmueble__nombre",
         "caracteristicas__nombre",
+        "ubicacion__distrito__nombre",
+        "ubicacion__distrito__provincia__nombre",
+        "ubicacion__distrito__provincia__departamento__nombre",
     ]
     ordering_fields = [
         "fecha_actualizacion",
