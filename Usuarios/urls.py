@@ -12,6 +12,8 @@ from .views import (
     PerfilEmpleadoInmobiliariaView,
     PerfilAgentePrestamosView,
     PerfilProfesionalServiciosView,
+    ConfirmarEmailView,
+    ReenviarEmailView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -58,4 +60,10 @@ urlpatterns = [
     path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("tipos/", include(tipos.urls)),
     path("perfil/", include(perfiles)),
+    path("auth/confirmar-email/", ConfirmarEmailView.as_view(), name="confirmar email"),
+    path(
+        "auth/reenviar-email-de-verificacion/",
+        ReenviarEmailView.as_view(),
+        name="reenviar email",
+    ),
 ]

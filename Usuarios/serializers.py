@@ -3,6 +3,7 @@ from rest_framework.serializers import ValidationError
 from Usuarios.util import enviar_correo_otp
 from .models import (
     AuthProvider,
+    CodigoUnUso,
     PerfilCliente,
     Usuario,
     TipoUsuario,
@@ -19,11 +20,20 @@ from Api.settings import GOOGLE_CLIENT_ID
 from django.contrib.auth import login
 from django.db.transaction import atomic
 from django.contrib.auth import authenticate
-from Planes.models import PlanInmuebles, PlanPrestamos, PlanServicios
+from Planes.models import PlanInmuebles, PlanPrestamos
+from drf_extra_fields.fields import Base64ImageField
 
 
 class OnlyMessageSerializer(serializers.Serializer):
     message = serializers.CharField()
+
+
+class CodigoUnUsoSerializer(serializers.ModelSerializer):
+    message = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = CodigoUnUso
+        fields = ["codigo", "message"]
 
 
 class TipoUsuarioSerializer(serializers.ModelSerializer):
@@ -100,6 +110,7 @@ class PerfilClienteSerializer(serializers.ModelSerializer):
 class UsuarioClienteSerializer(serializers.ModelSerializer):
     perfil_cliente = PerfilClienteSerializer()
     tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
+    tokens = TokenSerializer(read_only=True)
 
     class Meta:
         model = Usuario
@@ -112,6 +123,7 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
             "is_verified",
             "tipo_usuario",
             "perfil_cliente",
+            "tokens",
         ]
         read_only_fields = [
             "id",
@@ -171,6 +183,8 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
 
 
 class PerfilParticularInmueblesSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField(required=False)
+
     class Meta:
         model = PerfilParticularInmuebles
         fields = [
@@ -185,6 +199,7 @@ class PerfilParticularInmueblesSerializer(serializers.ModelSerializer):
 
 class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
     perfil_particular = PerfilParticularInmueblesSerializer()
+    tokens = TokenSerializer(read_only=True)
 
     class Meta:
         model = Usuario
@@ -197,6 +212,7 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
             "is_verified",
             "tipo_usuario",
             "perfil_particular",
+            "tokens",
         ]
         read_only_fields = [
             "id",
@@ -233,6 +249,8 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
 
 
 class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField()
+
     class Meta:
         model = PerfilInmobiliaria
         fields = [
@@ -251,6 +269,7 @@ class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
 
 class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
     perfil_inmobiliaria = PerfilInmobiliariaSerializer()
+    tokens = TokenSerializer(read_only=True)
 
     class Meta:
         model = Usuario
@@ -263,6 +282,7 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
             "is_verified",
             "tipo_usuario",
             "perfil_inmobiliaria",
+            "tokens",
         ]
         read_only_fields = [
             "id",
@@ -354,6 +374,8 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
 
 
 class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
+    avatar = Base64ImageField()
+
     class Meta:
         model = PerfilAgentePrestamos
         fields = ["avatar", "telefono", "plan", "entidad"]
@@ -361,6 +383,7 @@ class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
 
 class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
     perfil_agente = PerfilAgentePrestamosSerializer()
+    tokens = TokenSerializer(read_only=True)
 
     class Meta:
         model = Usuario
@@ -373,6 +396,7 @@ class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
             "is_verified",
             "tipo_usuario",
             "perfil_agente",
+            "tokens",
         ]
         read_only_fields = [
             "id",
@@ -414,6 +438,7 @@ class PerfilProfesionalServiciosSerializer(serializers.ModelSerializer):
 
 class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
     perfil_profesional = PerfilProfesionalServiciosSerializer()
+    tokens = TokenSerializer(read_only=True)
 
     class Meta:
         model = Usuario
@@ -426,6 +451,7 @@ class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
             "is_verified",
             "tipo_usuario",
             "perfil_profesional",
+            "tokens",
         ]
         read_only_fields = [
             "id",

@@ -1,5 +1,6 @@
-from Usuarios.util import UserViewSet
+from Usuarios.util import UserViewSet, enviar_correo_otp
 from .serializers import (
+    CodigoUnUsoSerializer,
     OnlyMessageSerializer,
     TipoUsuarioSerializer,
     RegistrarUsuarioSerializer,
@@ -12,7 +13,7 @@ from .serializers import (
     UsuarioAgentePrestamosSerializer,
     UsuarioProfesionalServiciosSerializer,
 )
-from .models import Usuario, TipoUsuario
+from .models import CodigoUnUso, Usuario, TipoUsuario
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.response import Response
@@ -24,6 +25,7 @@ from rest_framework.mixins import (
     DestroyModelMixin,
 )
 from rest_framework.generics import GenericAPIView
+from rest_framework import status
 
 
 class RegistrarUsuarioView(ModelViewSet):
@@ -136,4 +138,58 @@ class PerfilProfesionalServiciosView(UserViewSet):
     def get_queryset(self):
         return Usuario.objects.filter(
             perfil_inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+        )
+
+
+class ConfirmarEmailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CodigoUnUsoSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+
+            codigo = CodigoUnUso.objects.get(codigo=serializer.validated_data["codigo"])
+            usuario = codigo.usuario
+            if usuario != request.user:
+                return Response(
+                    {"message": "Codigo no valido"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not usuario.is_verified:
+                usuario.is_verified = True
+                usuario.save()
+                codigo.delete()
+                return Response(
+                    {"message": "Email confirmado"},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(
+                {"message": "Email ya confirmado"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except CodigoUnUso.DoesNotExist:
+            return Response(
+                {"message": "Codigo no valido"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ReenviarEmailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OnlyMessageSerializer
+
+    def post(self, request):
+        usuario = request.user
+        if usuario.is_verified:
+            return Response(
+                {"message": "Email ya confirmado"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        CodigoUnUso.objects.filter(usuario=usuario).delete()
+        enviar_correo_otp(usuario)
+        return Response(
+            {"message": "Codigo enviado"},
+            status=status.HTTP_200_OK,
         )
