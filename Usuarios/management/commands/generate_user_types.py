@@ -9,6 +9,7 @@ class Command(BaseCommand):
         tipos = [
             "Cliente",
             "Particular Inmuebles",
+            "Agente Inmobiliario",
             "Inmobiliaria",
             "Empleado Inmobiliaria",
             "Agente Prestamos",

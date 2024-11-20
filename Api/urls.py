@@ -16,6 +16,7 @@ urlpatterns = [
     path("", include("Prestamos.urls")),
     path("", include("Ubicacion.urls")),
     path("", include("Inmuebles.urls")),
+    path("", include("Planes.urls")),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

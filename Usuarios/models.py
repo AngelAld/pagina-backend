@@ -53,7 +53,10 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     def tokens(self):
         refresh = RefreshToken.for_user(self)
-        return {"refresh": str(refresh), "access": str(refresh.access_token)}
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
 
 
 class CodigoUnUso(models.Model):
@@ -87,7 +90,7 @@ class PerfilParticularInmuebles(models.Model):
     usuario = models.OneToOneField(
         Usuario, on_delete=models.CASCADE, related_name="perfil_particular"
     )
-
+    avatar = models.ImageField(upload_to="avatar/particulares", null=True, blank=True)
     telefono = models.CharField(max_length=9)
     plan = models.ForeignKey(
         PlanInmuebles, on_delete=models.PROTECT, related_name="particulares"

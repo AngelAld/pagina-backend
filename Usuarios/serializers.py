@@ -89,126 +89,6 @@ class RegistrarUsuarioSerializer(serializers.ModelSerializer):
         return usuario
 
 
-class GoogleAuthSerializer(serializers.ModelSerializer):
-    credential = serializers.CharField(write_only=True)
-    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
-    id_tipo_usuario = serializers.PrimaryKeyRelatedField(
-        queryset=TipoUsuario.objects.all(),
-        write_only=True,
-        source="tipo_usuario",
-        required=False,
-    )
-    tokens = TokenSerializer(read_only=True)
-
-    class Meta:
-        model = Usuario
-        fields = [
-            "id",
-            "credential",
-            "email",
-            "nombres",
-            "apellidos",
-            "is_verified",
-            "id_tipo_usuario",
-            "tipo_usuario",
-            "tokens",
-        ]
-        extra_kwargs = {
-            "email": {"read_only": True},
-            "nombres": {"read_only": True},
-            "apellidos": {"read_only": True},
-            "is_verified": {"read_only": True},
-            "tokens": {"read_only": True},
-        }
-
-    def validate(self, attrs):
-        credential = attrs.get("credential")
-        try:
-            google_user_data = id_token.verify_oauth2_token(
-                credential, requests.Request()
-            )
-            if not google_user_data.get("aud") == GOOGLE_CLIENT_ID:
-                raise ValidationError("Token inválido")
-            if not google_user_data.get("email"):
-                raise ValidationError("El token no contiene un email válido")
-            attrs["google_user_data"] = google_user_data
-        except ValueError as e:
-            raise ValidationError(f"Token inválido: {e}")
-        return attrs
-
-    @atomic
-    def create(self, validated_data):
-        credential = validated_data.get("credential")
-        request = self.context.get("request")
-        google_user_data = id_token.verify_oauth2_token(credential, requests.Request())
-        tipo_usuario = validated_data.pop("tipo_usuario", None)
-        email = google_user_data.get("email")
-        nombres = google_user_data.get("given_name")
-        apellidos = google_user_data.get("family_name")
-
-        usuario, created = Usuario.objects.get_or_create(
-            email=email,
-            defaults={
-                "nombres": nombres,
-                "apellidos": apellidos,
-            },
-        )
-        if created:
-            if not tipo_usuario:
-                tipo_usuario = TipoUsuario.objects.get(nombre="Cliente")
-            usuario.tipo_usuario.add(tipo_usuario)
-        provider = AuthProvider.objects.get(nombre="google")
-        usuario.provider.add(provider)
-        usuario.is_verified = True
-        usuario.save()
-        login(request, usuario)
-        return usuario
-
-
-class LoginEmailSerializer(serializers.ModelSerializer):
-    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
-    tokens = TokenSerializer(read_only=True)
-    email = serializers.EmailField()
-
-    class Meta:
-        model = Usuario
-        fields = [
-            "id",
-            "email",
-            "password",
-            "nombres",
-            "apellidos",
-            "is_verified",
-            "tipo_usuario",
-            "tokens",
-        ]
-        extra_kwargs = {
-            "id": {"read_only": True},
-            "password": {"write_only": True},
-            "nombres": {"read_only": True},
-            "apellidos": {"read_only": True},
-            "is_verified": {"read_only": True},
-            "tipo_usuario": {"read_only": True},
-            "tokens": {"read_only": True},
-        }
-
-    def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-        usuario = authenticate(email=email, password=password)
-        if usuario is None:
-            raise ValidationError("Credenciales inválidas")
-        return attrs
-
-    def create(self, validated_data):
-        request = self.context.get("request")
-        usuario = authenticate(
-            email=validated_data.get("email"), password=validated_data.get("password")
-        )
-        login(request, usuario)
-        return usuario
-
-
 class PerfilClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilCliente
@@ -293,7 +173,14 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
 class PerfilParticularInmueblesSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilParticularInmuebles
-        fields = ["telefono", "plan"]
+        fields = [
+            "avatar",
+            "telefono",
+            "plan",
+        ]
+        extra_kwargs = {
+            "avatar": {"required": False},
+        }
 
 
 class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
@@ -519,14 +406,14 @@ class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
         return usuario
 
 
-class PerfilProfesionalServicios(serializers.ModelSerializer):
+class PerfilProfesionalServiciosSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilProfesionalServicios
         fields = ["telefono", "plan"]
 
 
 class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
-    perfil_profesional = PerfilProfesionalServicios()
+    perfil_profesional = PerfilProfesionalServiciosSerializer()
 
     class Meta:
         model = Usuario
@@ -569,4 +456,152 @@ class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
             **perfil_data,
         )
         usuario.save()
+        return usuario
+
+
+class GoogleAuthSerializer(serializers.ModelSerializer):
+    credential = serializers.CharField(write_only=True)
+    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
+    id_tipo_usuario = serializers.PrimaryKeyRelatedField(
+        queryset=TipoUsuario.objects.all(),
+        write_only=True,
+        source="tipo_usuario",
+        required=False,
+    )
+    perfil_cliente = PerfilClienteSerializer(required=False, allow_null=True)
+    perfil_particular = PerfilParticularInmueblesSerializer(
+        required=False, allow_null=True
+    )
+    perfil_inmobiliaria = PerfilInmobiliariaSerializer(required=False, allow_null=True)
+    perfil_agente = PerfilAgentePrestamosSerializer(required=False, allow_null=True)
+    perfil_profesional = PerfilProfesionalServiciosSerializer(
+        required=False, allow_null=True
+    )
+    tokens = TokenSerializer(read_only=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "credential",
+            "email",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "id_tipo_usuario",
+            "tipo_usuario",
+            "perfil_cliente",
+            "perfil_particular",
+            "perfil_inmobiliaria",
+            "perfil_agente",
+            "perfil_profesional",
+            "tokens",
+        ]
+        extra_kwargs = {
+            "email": {"read_only": True},
+            "nombres": {"read_only": True},
+            "apellidos": {"read_only": True},
+            "is_verified": {"read_only": True},
+            "tokens": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        credential = attrs.get("credential")
+        try:
+            google_user_data = id_token.verify_oauth2_token(
+                credential, requests.Request()
+            )
+            if not google_user_data.get("aud") == GOOGLE_CLIENT_ID:
+                raise ValidationError("Token inválido")
+            if not google_user_data.get("email"):
+                raise ValidationError("El token no contiene un email válido")
+            attrs["google_user_data"] = google_user_data
+        except ValueError as e:
+            raise ValidationError(f"Token inválido: {e}")
+        return attrs
+
+    @atomic
+    def create(self, validated_data):
+        credential = validated_data.get("credential")
+        request = self.context.get("request")
+        google_user_data = id_token.verify_oauth2_token(credential, requests.Request())
+        tipo_usuario = validated_data.pop("tipo_usuario", None)
+        email = google_user_data.get("email")
+        nombres = google_user_data.get("given_name")
+        apellidos = google_user_data.get("family_name")
+
+        usuario, created = Usuario.objects.get_or_create(
+            email=email,
+            defaults={
+                "nombres": nombres,
+                "apellidos": apellidos,
+            },
+        )
+        if created:
+            if not tipo_usuario:
+                tipo_usuario = TipoUsuario.objects.get(nombre="Cliente")
+            usuario.tipo_usuario.add(tipo_usuario)
+        provider = AuthProvider.objects.get(nombre="google")
+        usuario.provider.add(provider)
+        usuario.is_verified = True
+        usuario.save()
+        login(request, usuario)
+        return usuario
+
+
+class LoginEmailSerializer(serializers.ModelSerializer):
+    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
+    tokens = TokenSerializer(read_only=True)
+    email = serializers.EmailField()
+    perfil_cliente = PerfilClienteSerializer(required=False, allow_null=True)
+    perfil_particular = PerfilParticularInmueblesSerializer(
+        required=False, allow_null=True
+    )
+    perfil_inmobiliaria = PerfilInmobiliariaSerializer(required=False, allow_null=True)
+    perfil_agente = PerfilAgentePrestamosSerializer(required=False, allow_null=True)
+    perfil_profesional = PerfilProfesionalServiciosSerializer(
+        required=False, allow_null=True
+    )
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "password",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "tipo_usuario",
+            "perfil_cliente",
+            "perfil_particular",
+            "perfil_inmobiliaria",
+            "perfil_agente",
+            "perfil_profesional",
+            "tokens",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "password": {"write_only": True},
+            "nombres": {"read_only": True},
+            "apellidos": {"read_only": True},
+            "is_verified": {"read_only": True},
+            "tipo_usuario": {"read_only": True},
+            "tokens": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        usuario = authenticate(email=email, password=password)
+        if usuario is None:
+            raise ValidationError("Credenciales inválidas")
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        usuario = authenticate(
+            email=validated_data.get("email"), password=validated_data.get("password")
+        )
+        login(request, usuario)
         return usuario
