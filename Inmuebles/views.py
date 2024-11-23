@@ -27,6 +27,7 @@ from .serializers import (
     ContactoDueñoSerializer,
     CRUDListaSerializer,
     PublicarInmuebleSerializer,
+    InmuebleCrudSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import GenericViewSet
@@ -35,6 +36,7 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     DestroyModelMixin,
     UpdateModelMixin,
+    CreateModelMixin,
 )
 from Usuarios.util import enviar_correo
 from rest_framework.permissions import IsAuthenticated
@@ -71,7 +73,8 @@ class SubTipoInmuebleViewSet(ModelViewSet):
     queryset = SubTipoInmueble.objects.all()
     serializer_class = SubTipoInmuebleSerializer
     pagination_class = LimitOffsetPagination
-    filter_backends = [SearchFilter]
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filterset_fields = ["tipo_inmueble"]
     http_method_names = ["get"]
     search_fields = ["nombre", "descripcion", "tipo_Inmueble__nombre"]
 
@@ -120,6 +123,11 @@ class InmuebleListaViewSet(ListModelMixin, GenericViewSet):
         "precio_dolares",
     ]
     ordering = ["-fecha_actualizacion"]
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            estado__nombre="Publicado",
+        )
 
 
 class InmuebleDetalleViewSet(RetrieveModelMixin, GenericViewSet):
@@ -213,3 +221,20 @@ class PublicarInmuebleView(UpdateModelMixin, GenericViewSet):
         return Inmueble.objects.filter(
             dueño=self.request.user,
         )
+
+
+class CrudInmuebleViewSet(
+    UpdateModelMixin, CreateModelMixin, RetrieveModelMixin, GenericViewSet
+):
+    queryset = Inmueble.objects.all()
+    serializer_class = InmuebleCrudSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch"]
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            dueño=self.request.user,
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(dueño=self.request.user)

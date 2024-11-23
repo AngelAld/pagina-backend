@@ -13,6 +13,7 @@ from .views import (
     ContactoDueñoView,
     CRUDListaViewSet,
     PublicarInmuebleView,
+    CrudInmuebleViewSet,
 )
 
 router = DefaultRouter()
@@ -28,6 +29,7 @@ router.register(r"aviso-detalle", InmuebleDetalleViewSet, basename="aviso-detall
 router.register(r"crud-lista", CRUDListaViewSet, basename="crud-lista")
 router.register(r"previsualizar", InmueblePreViewSet, basename="previsualizacion")
 router.register(r"publicar", PublicarInmuebleView, basename="publicar")
+router.register(r"crud", CrudInmuebleViewSet, basename="crud")
 
 
 urlpatterns = [

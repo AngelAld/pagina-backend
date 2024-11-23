@@ -14,6 +14,8 @@ from .models import (
     PlanoInmueble,
     UbicacionInmueble,
 )
+from drf_extra_fields.fields import Base64ImageField
+from django.db.transaction import atomic
 
 
 class CaracteristicaSerializer(serializers.ModelSerializer):
@@ -343,4 +345,135 @@ class PublicarInmuebleSerializer(serializers.ModelSerializer):
             instance.save()
         except EstadoInmueble.DoesNotExist:
             raise serializers.ValidationError("Estado no encontrado")
+        return instance
+
+
+class ImagenCrudSerializer(serializers.ModelSerializer):
+    imagen = Base64ImageField()
+
+    class Meta:
+        model = ImagenInmueble
+        fields = [
+            "id",
+            "indice",
+            "imagen",
+            "titulo",
+            "is_portada",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": False},
+        }
+
+
+class PlanoCrudSerializer(serializers.ModelSerializer):
+    plano = Base64ImageField()
+
+    class Meta:
+        model = PlanoInmueble
+        fields = [
+            "id",
+            "plano",
+            "titulo",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": False},
+        }
+
+
+class UbicacionCrudSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UbicacionInmueble
+        fields = [
+            "id",
+            "distrito",
+            "calle",
+            "numero",
+            "latitud",
+            "longitud",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": False},
+        }
+
+
+class CaracteristicaCrudSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Caracteristica
+        fields = [
+            "id",
+        ]
+
+
+class InmuebleCrudSerializer(serializers.ModelSerializer):
+    caracteristicas = CaracteristicaCrudSerializer(many=True)
+    imagenes = ImagenCrudSerializer(many=True)
+    planos = PlanoCrudSerializer(many=True)
+    ubicacion = UbicacionCrudSerializer()
+
+    class Meta:
+        model = Inmueble
+        fields = [
+            "id",
+            "titulo",
+            "descripcion",
+            "tipo_operacion",
+            "habitaciones",
+            "baños",
+            "pisos",
+            "ascensores",
+            "estacionamientos",
+            "area_construida",
+            "area_total",
+            "precio_soles",
+            "precio_dolares",
+            "mantenimiento",
+            "tipo_antiguedad",
+            "años",
+            "tipo_inmueble",
+            "subtipo_inmueble",
+            "caracteristicas",
+            "imagenes",
+            "planos",
+            "ubicacion",
+        ]
+
+    @atomic
+    def create(self, validated_data):
+        caracteristicas_data = validated_data.pop("caracteristicas")
+        imagenes_data = validated_data.pop("imagenes")
+        planos_data = validated_data.pop("planos")
+        ubicacion_data = validated_data.pop("ubicacion")
+        inmueble = Inmueble.objects.create(**validated_data)
+        ubicacion = UbicacionInmueble.objects.create(
+            inmueble=inmueble, **ubicacion_data
+        )
+        for caracteristica_data in caracteristicas_data:
+            caracteristica = Caracteristica.objects.get(**caracteristica_data)
+            inmueble.caracteristicas.add(caracteristica)
+        for imagen_data in imagenes_data:
+            ImagenInmueble.objects.create(inmueble=inmueble, **imagen_data)
+        for plano_data in planos_data:
+            PlanoInmueble.objects.create(inmueble=inmueble, **plano_data)
+        return inmueble
+
+    @atomic
+    def update(self, instance, validated_data):
+        caracteristicas_data = validated_data.pop("caracteristicas")
+        imagenes_data = validated_data.pop("imagenes")
+        planos_data = validated_data.pop("planos")
+        ubicacion_data = validated_data.pop("ubicacion")
+        ubicacion = instance.ubicacion
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        for caracteristica_data in caracteristicas_data:
+            caracteristica = Caracteristica.objects.get(**caracteristica_data)
+            instance.caracteristicas.add(caracteristica)
+        for imagen_data in imagenes_data:
+            ImagenInmueble.objects.create(inmueble=instance, **imagen_data)
+        for plano_data in planos_data:
+            PlanoInmueble.objects.create(inmueble=instance, **plano_data)
+        for key, value in ubicacion_data.items():
+            setattr(ubicacion, key, value)
+        ubicacion.save()
         return instance
