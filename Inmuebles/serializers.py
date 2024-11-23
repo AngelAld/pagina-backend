@@ -216,3 +216,24 @@ class InmuebleDetalleSerializer(serializers.ModelSerializer):
             "imagenes",
             "planos",
         ]
+
+
+class ContactoDueñoSerializer(serializers.Serializer):
+    telefono = serializers.CharField(
+        write_only=True,
+    )
+    mensaje = serializers.CharField(
+        write_only=True,
+    )
+    email = serializers.EmailField(
+        write_only=True,
+    )
+    nombre = serializers.CharField(
+        write_only=True,
+    )
+    slug = serializers.CharField(
+        write_only=True,
+    )
+    message = serializers.CharField(
+        read_only=True,
+    )

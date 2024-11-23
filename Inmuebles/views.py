@@ -1,7 +1,9 @@
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import ModelViewSet
-
+from rest_framework.generics import GenericAPIView
+from rest_framework import status
+from rest_framework.response import Response
 from Inmuebles.filters import InmuebleFilterSet
 from .models import (
     Caracteristica,
@@ -21,10 +23,12 @@ from .serializers import (
     TipoOperacionSerializer,
     InmuebleListSerializer,
     InmuebleDetalleSerializer,
+    ContactoDueñoSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from Usuarios.util import enviar_correo
 
 
 class CaracteristicaViewSet(ModelViewSet):
@@ -121,3 +125,27 @@ class InmuebleDetalleViewSet(RetrieveModelMixin, GenericViewSet):
 
 
 # TODO: vistas para imagenes, planos y ubicaciones
+class ContactoDueñoView(GenericAPIView):
+    serializer_class = ContactoDueñoSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        print(data)
+
+        try:
+            inmueble = Inmueble.objects.get(slug=data["slug"])
+            enviar_correo(
+                asunto="Contacto de interesado",
+                mensaje=f"El interesado {data['nombre']} está interesado en su inmueble {inmueble.titulo}. Su correo es {data['email']}, su telefono es {data['telefono']} y su mensaje es {data['mensaje']}",
+                destinatario=inmueble.dueño.email,
+            )
+            return Response(
+                {"message": "Correo enviado correctamente"},
+                status=status.HTTP_201_CREATED,
+            )
+        except Inmueble.DoesNotExist:
+            return Response(
+                {"message": "Inmueble no encontrado"}, status=status.HTTP_404_NOT_FOUND
+            )

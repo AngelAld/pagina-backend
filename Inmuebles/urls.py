@@ -9,6 +9,7 @@ from .views import (
     TipoOperacionViewSet,
     InmuebleListaViewSet,
     InmuebleDetalleViewSet,
+    ContactoDueñoView,
 )
 
 router = DefaultRouter()
@@ -25,4 +26,5 @@ router.register(r"aviso-detalle", InmuebleDetalleViewSet, basename="aviso-detall
 
 urlpatterns = [
     path("inmuebles/", include(router.urls)),
+    path("inmuebles/contactar/", ContactoDueñoView.as_view()),
 ]
