@@ -218,6 +218,52 @@ class InmuebleDetalleSerializer(serializers.ModelSerializer):
         ]
 
 
+class InmueblePreviewSerializer(serializers.ModelSerializer):
+    dueño = DueñoSerializer()
+    tipo_operacion = serializers.StringRelatedField()
+    estado = serializers.StringRelatedField()
+    tipo_antiguedad = serializers.StringRelatedField()
+    subtipo_inmueble = serializers.StringRelatedField()
+    ubicacion = UbicacionInmuebleSerializer()
+    caracteristicas = serializers.StringRelatedField(many=True)
+    imagenes = ImagenInmuebleSerializer(many=True)
+    planos = PlanoInmuebleSerializer(many=True)
+
+    class Meta:
+        model = Inmueble
+        fields = [
+            "id",
+            "dueño",
+            "titulo",
+            "slug",
+            "descripcion",
+            "tipo_operacion",
+            "fecha_actualizacion",
+            "estado",
+            "habitaciones",
+            "baños",
+            "pisos",
+            "ascensores",
+            "estacionamientos",
+            "area_construida",
+            "area_total",
+            "precio_soles",
+            "precio_dolares",
+            "mantenimiento",
+            "tipo_antiguedad",
+            "años",
+            "tipo_inmueble",
+            "subtipo_inmueble",
+            "portada",
+            "num_favoritos",
+            "num_visitas",
+            "ubicacion",
+            "caracteristicas",
+            "imagenes",
+            "planos",
+        ]
+
+
 class ContactoDueñoSerializer(serializers.Serializer):
     telefono = serializers.CharField(
         write_only=True,
@@ -237,3 +283,64 @@ class ContactoDueñoSerializer(serializers.Serializer):
     message = serializers.CharField(
         read_only=True,
     )
+
+
+class CRUDListaSerializer(serializers.ModelSerializer):
+    portada = serializers.StringRelatedField()
+    tipo_inmueble = serializers.StringRelatedField(
+        source="tipo_inmueble.nombre",
+    )
+    calle = serializers.StringRelatedField(
+        source="ubicacion.calle",
+    )
+    distrito = serializers.StringRelatedField(
+        source="ubicacion.distrito.nombre",
+    )
+    num_visitas = serializers.StringRelatedField()
+    num_favoritos = serializers.StringRelatedField()
+    estado = serializers.StringRelatedField(
+        source="estado.nombre",
+    )
+
+    class Meta:
+        model = Inmueble
+        fields = [
+            "id",
+            "slug",
+            "portada",
+            "tipo_inmueble",
+            "precio_soles",
+            "precio_dolares",
+            "calle",
+            "distrito",
+            "num_visitas",
+            "num_favoritos",
+            "estado",
+        ]
+
+
+class PublicarInmuebleSerializer(serializers.ModelSerializer):
+    publicado = serializers.BooleanField(
+        write_only=True,
+    )
+
+    class Meta:
+        model = Inmueble
+        fields = [
+            "estado",
+            "publicado",
+        ]
+        read_only_fields = [
+            "estado",
+        ]
+
+    def update(self, instance, validated_data):
+        try:
+            if validated_data["publicado"]:
+                instance.estado = EstadoInmueble.objects.get(nombre="Publicado")
+            else:
+                instance.estado = EstadoInmueble.objects.get(nombre="En borrador")
+            instance.save()
+        except EstadoInmueble.DoesNotExist:
+            raise serializers.ValidationError("Estado no encontrado")
+        return instance

@@ -16,6 +16,7 @@ from .models import (
 )
 from .serializers import (
     CaracteristicaSerializer,
+    InmueblePreviewSerializer,
     TipoAntiguedadSerializer,
     TipoInmuebleSerializer,
     SubTipoInmuebleSerializer,
@@ -24,11 +25,19 @@ from .serializers import (
     InmuebleListSerializer,
     InmuebleDetalleSerializer,
     ContactoDueñoSerializer,
+    CRUDListaSerializer,
+    PublicarInmuebleSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
+from rest_framework.mixins import (
+    ListModelMixin,
+    RetrieveModelMixin,
+    DestroyModelMixin,
+    UpdateModelMixin,
+)
 from Usuarios.util import enviar_correo
+from rest_framework.permissions import IsAuthenticated
 
 
 class CaracteristicaViewSet(ModelViewSet):
@@ -124,6 +133,16 @@ class InmuebleDetalleViewSet(RetrieveModelMixin, GenericViewSet):
         )
 
 
+class InmueblePreViewSet(RetrieveModelMixin, GenericViewSet):
+    queryset = Inmueble.objects.all()
+    serializer_class = InmueblePreviewSerializer
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            dueño=self.request.user,
+        )
+
+
 # TODO: vistas para imagenes, planos y ubicaciones
 class ContactoDueñoView(GenericAPIView):
     serializer_class = ContactoDueñoSerializer
@@ -149,3 +168,48 @@ class ContactoDueñoView(GenericAPIView):
             return Response(
                 {"message": "Inmueble no encontrado"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class CRUDListaViewSet(ListModelMixin, GenericViewSet, DestroyModelMixin):
+    queryset = Inmueble.objects.all()
+    serializer_class = CRUDListaSerializer
+    pagination_class = LimitOffsetPagination
+    permission_classes = [IsAuthenticated]
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = [
+        "slug",
+        "titulo",
+        "estado__nombre",
+        "descripcion",
+        "tipo_operacion__nombre",
+        "tipo_antiguedad__nombre",
+        "subtipo_inmueble__nombre",
+        "caracteristicas__nombre",
+        "ubicacion__distrito__nombre",
+        "ubicacion__distrito__provincia__nombre",
+        "ubicacion__distrito__provincia__departamento__nombre",
+    ]
+    ordering_fields = [
+        "fecha_actualizacion",
+        "precio_soles",
+        "precio_dolares",
+    ]
+    # ordering = ["-fecha_actualizacion"]
+    http_method_names = ["get", "delete"]
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            dueño=self.request.user,
+        )
+
+
+class PublicarInmuebleView(UpdateModelMixin, GenericViewSet):
+    queryset = Inmueble.objects.all()
+    serializer_class = PublicarInmuebleSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["put"]
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            dueño=self.request.user,
+        )

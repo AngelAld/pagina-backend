@@ -9,7 +9,10 @@ from .views import (
     TipoOperacionViewSet,
     InmuebleListaViewSet,
     InmuebleDetalleViewSet,
+    InmueblePreViewSet,
     ContactoDueñoView,
+    CRUDListaViewSet,
+    PublicarInmuebleView,
 )
 
 router = DefaultRouter()
@@ -22,6 +25,9 @@ router.register(r"estado-inmuebles", EstadoInmuebleViewSet)
 router.register(r"tipo-operaciones", TipoOperacionViewSet)
 router.register(r"avisos", InmuebleListaViewSet)
 router.register(r"aviso-detalle", InmuebleDetalleViewSet, basename="aviso-detalle")
+router.register(r"crud-lista", CRUDListaViewSet, basename="crud-lista")
+router.register(r"previsualizar", InmueblePreViewSet, basename="previsualizacion")
+router.register(r"publicar", PublicarInmuebleView, basename="publicar")
 
 
 urlpatterns = [
