@@ -34,6 +34,7 @@ class DistritoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Distrito
         fields = [
+            "id",
             "nombre",
             "provincia",
             "departamento",

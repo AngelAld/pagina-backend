@@ -384,16 +384,12 @@ class UbicacionCrudSerializer(serializers.ModelSerializer):
     class Meta:
         model = UbicacionInmueble
         fields = [
-            "id",
             "distrito",
             "calle",
             "numero",
             "latitud",
             "longitud",
         ]
-        extra_kwargs = {
-            "id": {"read_only": False},
-        }
 
 
 class CaracteristicaCrudSerializer(serializers.ModelSerializer):
@@ -405,10 +401,10 @@ class CaracteristicaCrudSerializer(serializers.ModelSerializer):
 
 
 class InmuebleCrudSerializer(serializers.ModelSerializer):
-    caracteristicas = CaracteristicaCrudSerializer(many=True)
-    imagenes = ImagenCrudSerializer(many=True)
-    planos = PlanoCrudSerializer(many=True)
-    ubicacion = UbicacionCrudSerializer()
+    caracteristicas = CaracteristicaCrudSerializer(many=True, required=False)
+    imagenes = ImagenCrudSerializer(many=True, required=False)
+    planos = PlanoCrudSerializer(many=True, required=False)
+    ubicacion = UbicacionCrudSerializer(required=False)
 
     class Meta:
         model = Inmueble
@@ -436,33 +432,52 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
             "planos",
             "ubicacion",
         ]
+        extra_kwargs = {
+            "titulo": {"required": False},
+            "descripcion": {"required": False},
+            "tipo_operacion": {"required": False},
+            "habitaciones": {"required": False},
+            "baños": {"required": False},
+            "pisos": {"required": False},
+            "ascensores": {"required": False},
+            "estacionamientos": {"required": False},
+            "area_construida": {"required": False},
+            "area_total": {"required": False},
+            "precio_soles": {"required": False},
+            "precio_dolares": {"required": False},
+            "mantenimiento": {"required": False},
+            "tipo_antiguedad": {"required": False},
+            "años": {"required": False},
+            "tipo_inmueble": {"required": False},
+            "subtipo_inmueble": {"required": False},
+        }
 
     @atomic
     def create(self, validated_data):
-        caracteristicas_data = validated_data.pop("caracteristicas")
-        imagenes_data = validated_data.pop("imagenes")
-        planos_data = validated_data.pop("planos")
-        ubicacion_data = validated_data.pop("ubicacion")
-        inmueble = Inmueble.objects.create(**validated_data)
-        ubicacion = UbicacionInmueble.objects.create(
-            inmueble=inmueble, **ubicacion_data
-        )
-        for caracteristica_data in caracteristicas_data:
-            caracteristica = Caracteristica.objects.get(**caracteristica_data)
-            inmueble.caracteristicas.add(caracteristica)
-        for imagen_data in imagenes_data:
-            ImagenInmueble.objects.create(inmueble=inmueble, **imagen_data)
-        for plano_data in planos_data:
-            PlanoInmueble.objects.create(inmueble=inmueble, **plano_data)
+        # caracteristicas_data = validated_data.pop("caracteristicas")
+        # imagenes_data = validated_data.pop("imagenes")
+        # planos_data = validated_data.pop("planos")
+        # ubicacion_data = validated_data.pop("ubicacion")
+        estado = EstadoInmueble.objects.get(nombre="En borrador")
+        inmueble = Inmueble.objects.create(estado=estado, **validated_data)
+        # ubicacion = UbicacionInmueble.objects.create(
+        #     inmueble=inmueble, **ubicacion_data
+        # )
+        # for caracteristica_data in caracteristicas_data:
+        #     caracteristica = Caracteristica.objects.get(**caracteristica_data)
+        #     inmueble.caracteristicas.add(caracteristica)
+        # for imagen_data in imagenes_data:
+        #     ImagenInmueble.objects.create(inmueble=inmueble, **imagen_data)
+        # for plano_data in planos_data:
+        #     PlanoInmueble.objects.create(inmueble=inmueble, **plano_data)
         return inmueble
 
     @atomic
     def update(self, instance, validated_data):
-        caracteristicas_data = validated_data.pop("caracteristicas")
-        imagenes_data = validated_data.pop("imagenes")
-        planos_data = validated_data.pop("planos")
-        ubicacion_data = validated_data.pop("ubicacion")
-        ubicacion = instance.ubicacion
+        caracteristicas_data = validated_data.pop("caracteristicas", [])
+        imagenes_data = validated_data.pop("imagenes", [])
+        planos_data = validated_data.pop("planos", [])
+        ubicacion_data = validated_data.pop("ubicacion", None)
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()
@@ -473,7 +488,17 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
             ImagenInmueble.objects.create(inmueble=instance, **imagen_data)
         for plano_data in planos_data:
             PlanoInmueble.objects.create(inmueble=instance, **plano_data)
-        for key, value in ubicacion_data.items():
-            setattr(ubicacion, key, value)
-        ubicacion.save()
+
+        if ubicacion_data is not None:
+
+            try:
+                ubicacion = UbicacionInmueble.objects.get(inmueble=instance)
+                for key, value in ubicacion_data.items():
+                    setattr(ubicacion, key, value)
+                ubicacion.save()
+            except UbicacionInmueble.DoesNotExist:
+                ubicacion = UbicacionInmueble.objects.create(
+                    inmueble=instance, **ubicacion_data
+                )
+
         return instance
