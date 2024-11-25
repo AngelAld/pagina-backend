@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from Usuarios.models import TipoUsuario
+from Usuarios.models import TipoUsuario, AuthProvider
 
 
 class Command(BaseCommand):
@@ -18,3 +18,7 @@ class Command(BaseCommand):
         for tipo in tipos:
             TipoUsuario.objects.get_or_create(nombre=tipo)
             self.stdout.write(self.style.SUCCESS(f"Tipo de usuario {tipo} creado"))
+        AuthProvider.objects.get_or_create(nombre="google")
+        self.stdout.write(self.style.SUCCESS("AuthProvider google creado"))
+        AuthProvider.objects.get_or_create(nombre="email")
+        self.stdout.write(self.style.SUCCESS("AuthProvider email creado"))
