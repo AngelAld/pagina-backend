@@ -381,9 +381,18 @@ class PlanoCrudSerializer(serializers.ModelSerializer):
 
 
 class UbicacionCrudSerializer(serializers.ModelSerializer):
+    departamento = serializers.StringRelatedField(
+        source="distrito.provincia.departamento.nombre", read_only=True
+    )
+    provincia = serializers.StringRelatedField(
+        source="distrito.provincia.nombre", read_only=True
+    )
+
     class Meta:
         model = UbicacionInmueble
         fields = [
+            "departamento",
+            "provincia",
             "distrito",
             "calle",
             "numero",
@@ -454,22 +463,9 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
-        # caracteristicas_data = validated_data.pop("caracteristicas")
-        # imagenes_data = validated_data.pop("imagenes")
-        # planos_data = validated_data.pop("planos")
-        # ubicacion_data = validated_data.pop("ubicacion")
         estado = EstadoInmueble.objects.get(nombre="En borrador")
         inmueble = Inmueble.objects.create(estado=estado, **validated_data)
-        # ubicacion = UbicacionInmueble.objects.create(
-        #     inmueble=inmueble, **ubicacion_data
-        # )
-        # for caracteristica_data in caracteristicas_data:
-        #     caracteristica = Caracteristica.objects.get(**caracteristica_data)
-        #     inmueble.caracteristicas.add(caracteristica)
-        # for imagen_data in imagenes_data:
-        #     ImagenInmueble.objects.create(inmueble=inmueble, **imagen_data)
-        # for plano_data in planos_data:
-        #     PlanoInmueble.objects.create(inmueble=inmueble, **plano_data)
+
         return inmueble
 
     @atomic
@@ -490,7 +486,6 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
             PlanoInmueble.objects.create(inmueble=instance, **plano_data)
 
         if ubicacion_data is not None:
-
             try:
                 ubicacion = UbicacionInmueble.objects.get(inmueble=instance)
                 for key, value in ubicacion_data.items():
