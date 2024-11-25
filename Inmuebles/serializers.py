@@ -361,7 +361,7 @@ class ImagenCrudSerializer(serializers.ModelSerializer):
             "is_portada",
         ]
         extra_kwargs = {
-            "id": {"read_only": False},
+            "id": {"read_only": False, "required": False},
         }
 
 
