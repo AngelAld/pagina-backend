@@ -406,7 +406,12 @@ class CaracteristicaCrudSerializer(serializers.ModelSerializer):
         model = Caracteristica
         fields = [
             "id",
+            "nombre",
         ]
+        extra_kwargs = {
+            "id": {"read_only": False},
+            "nombre": {"read_only": True},
+        }
 
 
 class InmuebleCrudSerializer(serializers.ModelSerializer):
@@ -477,6 +482,7 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()
+        instance.caracteristicas.clear()
         for caracteristica_data in caracteristicas_data:
             caracteristica = Caracteristica.objects.get(**caracteristica_data)
             instance.caracteristicas.add(caracteristica)
