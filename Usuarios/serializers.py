@@ -322,7 +322,7 @@ class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         write_only=True,
     )
     avatar_url = serializers.StringRelatedField(
-        source="avatar", read_only=True, allow_null=True
+        source="avatar.url", read_only=True, allow_null=True
     )
 
     class Meta:
