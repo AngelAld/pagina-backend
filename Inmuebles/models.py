@@ -107,7 +107,7 @@ class Inmueble(models.Model):
     caracteristicas = models.ManyToManyField(Caracteristica, blank=True)
 
     @property
-    def portada(self):
+    def portada(self) -> str:
         return (
             ImagenInmueble.objects.filter(inmueble=self, is_portada=True)
             .first()
@@ -115,11 +115,11 @@ class Inmueble(models.Model):
         )
 
     @property
-    def num_favoritos(self):
+    def num_favoritos(self) -> int:
         return self.favoritos.count()
 
     @property
-    def num_visitas(self):
+    def num_visitas(self) -> int:
         return self.visitas.count()
 
     def save(self, **kwargs):

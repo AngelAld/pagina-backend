@@ -154,7 +154,7 @@ class DueñoSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = ["nombre", "email", "telefono"]
 
-    def get_nombre(self, obj):
+    def get_nombre(self, obj) -> str:
         if hasattr(obj, "perfil_particular"):
             return obj.perfil_particular.usuario.nombre_completo
         elif hasattr(obj, "perfil_empleado"):
@@ -164,7 +164,7 @@ class DueñoSerializer(serializers.ModelSerializer):
         else:
             return None
 
-    def get_telefono(self, obj):
+    def get_telefono(self, obj) -> str:
         if hasattr(obj, "perfil_particular"):
             return obj.perfil_particular.telefono
         elif hasattr(obj, "perfil_empleado"):
@@ -349,7 +349,13 @@ class PublicarInmuebleSerializer(serializers.ModelSerializer):
 
 
 class ImagenCrudSerializer(serializers.ModelSerializer):
-    imagen = Base64ImageField()
+    imagen = Base64ImageField(
+        required=False,
+        write_only=True,
+    )
+    imagen_url = serializers.StringRelatedField(
+        source="imagen.url",
+    )
 
     class Meta:
         model = ImagenInmueble
@@ -357,6 +363,7 @@ class ImagenCrudSerializer(serializers.ModelSerializer):
             "id",
             "indice",
             "imagen",
+            "imagen_url",
             "titulo",
             "is_portada",
         ]
@@ -486,8 +493,27 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
         for caracteristica_data in caracteristicas_data:
             caracteristica = Caracteristica.objects.get(**caracteristica_data)
             instance.caracteristicas.add(caracteristica)
+        # Delete images that are not in imagenes_data
+        imagen_ids = [
+            imagen_data.get("id")
+            for imagen_data in imagenes_data
+            if "id" in imagen_data
+        ]
+        ImagenInmueble.objects.filter(inmueble=instance).exclude(
+            id__in=imagen_ids
+        ).delete()
+
         for imagen_data in imagenes_data:
-            ImagenInmueble.objects.create(inmueble=instance, **imagen_data)
+            print("###############")
+            print(imagen_data)
+            if "imagen" in imagen_data:
+                imagen_data.pop("id", None)
+                ImagenInmueble.objects.create(inmueble=instance, **imagen_data)
+            else:
+                imagen = ImagenInmueble.objects.get(id=imagen_data["id"])
+                for key, value in imagen_data.items():
+                    setattr(imagen, key, value)
+                imagen.save()
         for plano_data in planos_data:
             PlanoInmueble.objects.create(inmueble=instance, **plano_data)
 
