@@ -26,6 +26,9 @@ from rest_framework.mixins import (
 )
 from rest_framework.generics import GenericAPIView
 from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.pagination import LimitOffsetPagination
 
 
 class RegistrarUsuarioView(ModelViewSet):
@@ -110,6 +113,13 @@ class PerfilEmpleadoInmobiliariaView(ModelViewSet):
     serializer_class = UsuarioEmpleadoInmobiliariaSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+
+    def get_queryset(self):
+        return Usuario.objects.filter(
+            perfil_empleado__inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+        )
 
 
 class PerfilAgentePrestamosView(UserViewSet):

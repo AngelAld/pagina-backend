@@ -316,7 +316,7 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
         return usuario
 
 
-class PerfilEmpleadoInmobiliaria(serializers.ModelSerializer):
+class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(
         required=False,
         write_only=True,
@@ -335,38 +335,30 @@ class PerfilEmpleadoInmobiliaria(serializers.ModelSerializer):
 
 
 class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
-    # perfil_empleado = PerfilEmpleadoInmobiliaria(
-    #     allow_null=True,
-    # )
-    # tipo_usuario = serializers.StringRelatedField(
-    #     many=True,
-    #     read_only=True,
-    # )
+    perfil_empleado = PerfilEmpleadoInmobiliariaSerializer(
+        required=False,
+    )
 
     class Meta:
         model = Usuario
         fields = [
             "id",
             "email",
-            # "password",
-            # "nombres",
-            # "apellidos",
-            # "dni",
-            # "tipo_usuario",
-            # "perfil_empleado",
+            "password",
+            "nombres",
+            "apellidos",
+            "dni",
+            "perfil_empleado",
         ]
-        # read_only_fields = [
-        #     "id",
-        #     "is_verified",
-        #     "tipo_usuario",
-        # ]
+        extra_kwargs = {
+            "password": {"write_only": True},
+        }
 
     def validate(self, attrs):
         usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
         if not hasattr(usuario, "perfil_inmobiliaria"):
             raise ValidationError("No tienes un perfil de inmobiliaria")
+        return attrs
 
     @atomic
     def create(self, validated_data):
