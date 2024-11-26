@@ -317,34 +317,49 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
 
 
 class PerfilEmpleadoInmobiliaria(serializers.ModelSerializer):
+    avatar = Base64ImageField(
+        required=False,
+        write_only=True,
+    )
+    avatar_url = serializers.StringRelatedField(
+        source="avatar", read_only=True, allow_null=True
+    )
+
     class Meta:
         model = PerfilEmpleadoInmobiliaria
         fields = [
             "avatar",
+            "avatar_url",
             "telefono",
         ]
 
 
 class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
-    perfil_empleado = PerfilEmpleadoInmobiliaria()
+    # perfil_empleado = PerfilEmpleadoInmobiliaria(
+    #     allow_null=True,
+    # )
+    # tipo_usuario = serializers.StringRelatedField(
+    #     many=True,
+    #     read_only=True,
+    # )
 
     class Meta:
         model = Usuario
         fields = [
             "id",
             "email",
-            "password",
-            "nombres",
-            "apellidos",
-            "dni",
-            "tipo_usuario",
-            "perfil_empleado",
+            # "password",
+            # "nombres",
+            # "apellidos",
+            # "dni",
+            # "tipo_usuario",
+            # "perfil_empleado",
         ]
-        read_only_fields = [
-            "id",
-            "is_verified",
-            "tipo_usuario",
-        ]
+        # read_only_fields = [
+        #     "id",
+        #     "is_verified",
+        #     "tipo_usuario",
+        # ]
 
     def validate(self, attrs):
         usuario: Usuario = self.context.get("request").user
@@ -371,6 +386,22 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         )
         usuario.save()
         return usuario
+
+    @atomic
+    def update(self, instance: Usuario, validated_data):
+        instance.email = validated_data.get("email")
+        instance.nombres = validated_data.get("nombres")
+        instance.apellidos = validated_data.get("apellidos")
+        instance.dni = validated_data.get("dni")
+        instance.save()
+        perfil = PerfilEmpleadoInmobiliaria.objects.get(usuario=instance)
+        perfil_data = validated_data.get("perfil_empleado", None)
+        if perfil_data is not None:
+            perfil.telefono = perfil_data.get("telefono")
+            if "avatar" in perfil_data:
+                perfil.avatar = perfil_data.get("avatar")
+            perfil.save()
+        return instance
 
 
 class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):

@@ -19,14 +19,14 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 auth = DefaultRouter()
 tipos = DefaultRouter()
-
+router = DefaultRouter()
 # Auth
 auth.register("email", RegistrarUsuarioView, basename="registrar con email")
 auth.register("google", AutenticarUsuarioGoogleView, basename="registrar con google")
 auth.register("login", LoginEmailView, basename="Iniciar sesión con email")
 # Tipos
 tipos.register("usuarios", ListaTiposUsuariosView)
-
+router.register("inmobiliaria-empleados", PerfilEmpleadoInmobiliariaView)
 
 perfiles = [
     path("cliente/", PerfilClienteView.as_view(), name="perfil cliente"),
@@ -36,11 +36,6 @@ perfiles = [
         name="perfil particular inmuebles",
     ),
     path("inmobiliaria/", PerfilInmobiliariaView.as_view(), name="perfil inmobiliaria"),
-    path(
-        "empleado-inmobiliaria/",
-        PerfilEmpleadoInmobiliariaView.as_view(),
-        name="perfil empleado inmobiliaria",
-    ),
     path(
         "agente-prestamos/",
         PerfilAgentePrestamosView.as_view(),
@@ -60,6 +55,7 @@ urlpatterns = [
     path("auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("tipos/", include(tipos.urls)),
     path("perfil/", include(perfiles)),
+    path("perfil/", include(router.urls)),
     path("auth/confirmar-email/", ConfirmarEmailView.as_view(), name="confirmar email"),
     path(
         "auth/reenviar-email-de-verificacion/",
