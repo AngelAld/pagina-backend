@@ -16,6 +16,7 @@ from .views import (
     CrudInmuebleViewSet,
     FavoritoViewSet,
     VisitaViewSet,
+    MisFavoritosViewSet,
 )
 
 router = DefaultRouter()
@@ -33,6 +34,7 @@ router.register(r"previsualizar", InmueblePreViewSet, basename="previsualizacion
 router.register(r"publicar", PublicarInmuebleView, basename="publicar")
 router.register(r"crud", CrudInmuebleViewSet, basename="crud")
 router.register(r"favoritos", FavoritoViewSet, basename="favoritos")
+router.register(r"mis-favoritos", MisFavoritosViewSet, basename="mis-favoritos")
 router.register(r"visitas", VisitaViewSet, basename="visitas")
 urlpatterns = [
     path("inmuebles/", include(router.urls)),

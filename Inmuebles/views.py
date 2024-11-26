@@ -133,6 +133,38 @@ class InmuebleListaViewSet(ListModelMixin, GenericViewSet):
         )
 
 
+class MisFavoritosViewSet(ListModelMixin, GenericViewSet):
+    pagination_class = LimitOffsetPagination
+    serializer_class = InmuebleListSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    permission_classes = [IsAuthenticated]
+    lookup_field = "slug"
+    search_fields = [
+        "slug",
+        "titulo",
+        "estado__nombre",
+        "descripcion",
+        "tipo_operacion__nombre",
+        "tipo_antiguedad__nombre",
+        "subtipo_inmueble__nombre",
+        "caracteristicas__nombre",
+        "ubicacion__distrito__nombre",
+        "ubicacion__distrito__provincia__nombre",
+        "ubicacion__distrito__provincia__departamento__nombre",
+    ]
+    ordering_fields = [
+        "fecha_actualizacion",
+        "precio_soles",
+        "precio_dolares",
+    ]
+    ordering = ["-fecha_actualizacion"]
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            favoritos__usuario=self.request.user,
+        )
+
+
 class InmuebleDetalleViewSet(RetrieveModelMixin, GenericViewSet):
     queryset = Inmueble.objects.all()
     serializer_class = InmuebleDetalleSerializer
