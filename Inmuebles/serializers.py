@@ -483,13 +483,15 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
     @atomic
     def update(self, instance, validated_data):
         caracteristicas_data = validated_data.pop("caracteristicas", None)
+
         imagenes_data = validated_data.pop("imagenes", None)
         planos_data = validated_data.pop("planos", None)
         ubicacion_data = validated_data.pop("ubicacion", None)
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()
-        if caracteristica_data is not None:
+
+        if caracteristicas_data is not None:
             instance.caracteristicas.clear()
             for caracteristica_data in caracteristicas_data:
                 caracteristica = Caracteristica.objects.get(**caracteristica_data)
