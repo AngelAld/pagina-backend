@@ -482,40 +482,44 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
 
     @atomic
     def update(self, instance, validated_data):
-        caracteristicas_data = validated_data.pop("caracteristicas", [])
-        imagenes_data = validated_data.pop("imagenes", [])
-        planos_data = validated_data.pop("planos", [])
+        caracteristicas_data = validated_data.pop("caracteristicas", None)
+        imagenes_data = validated_data.pop("imagenes", None)
+        planos_data = validated_data.pop("planos", None)
         ubicacion_data = validated_data.pop("ubicacion", None)
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()
-        instance.caracteristicas.clear()
-        for caracteristica_data in caracteristicas_data:
-            caracteristica = Caracteristica.objects.get(**caracteristica_data)
-            instance.caracteristicas.add(caracteristica)
-        # Delete images that are not in imagenes_data
-        imagen_ids = [
-            imagen_data.get("id")
-            for imagen_data in imagenes_data
-            if "id" in imagen_data
-        ]
-        ImagenInmueble.objects.filter(inmueble=instance).exclude(
-            id__in=imagen_ids
-        ).delete()
+        if caracteristica_data is not None:
+            instance.caracteristicas.clear()
+            for caracteristica_data in caracteristicas_data:
+                caracteristica = Caracteristica.objects.get(**caracteristica_data)
+                instance.caracteristicas.add(caracteristica)
+            # Delete images that are not in imagenes_data
+        if imagenes_data is not None:
+            imagen_ids = [
+                imagen_data.get("id")
+                for imagen_data in imagenes_data
+                if "id" in imagen_data
+            ]
+            ImagenInmueble.objects.filter(inmueble=instance).exclude(
+                id__in=imagen_ids
+            ).delete()
 
-        for imagen_data in imagenes_data:
-            print("###############")
-            print(imagen_data)
-            if "imagen" in imagen_data:
-                imagen_data.pop("id", None)
-                ImagenInmueble.objects.create(inmueble=instance, **imagen_data)
-            else:
-                imagen = ImagenInmueble.objects.get(id=imagen_data["id"])
-                for key, value in imagen_data.items():
-                    setattr(imagen, key, value)
-                imagen.save()
-        for plano_data in planos_data:
-            PlanoInmueble.objects.create(inmueble=instance, **plano_data)
+            for imagen_data in imagenes_data:
+                print("###############")
+                print(imagen_data)
+                if "imagen" in imagen_data:
+                    imagen_data.pop("id", None)
+                    ImagenInmueble.objects.create(inmueble=instance, **imagen_data)
+                else:
+                    imagen = ImagenInmueble.objects.get(id=imagen_data["id"])
+                    for key, value in imagen_data.items():
+                        setattr(imagen, key, value)
+                    imagen.save()
+        if planos_data is not None:
+
+            for plano_data in planos_data:
+                PlanoInmueble.objects.create(inmueble=instance, **plano_data)
 
         if ubicacion_data is not None:
             try:
