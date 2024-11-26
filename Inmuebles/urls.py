@@ -14,6 +14,8 @@ from .views import (
     CRUDListaViewSet,
     PublicarInmuebleView,
     CrudInmuebleViewSet,
+    FavoritoViewSet,
+    VisitaViewSet,
 )
 
 router = DefaultRouter()
@@ -30,8 +32,8 @@ router.register(r"crud-lista", CRUDListaViewSet, basename="crud-lista")
 router.register(r"previsualizar", InmueblePreViewSet, basename="previsualizacion")
 router.register(r"publicar", PublicarInmuebleView, basename="publicar")
 router.register(r"crud", CrudInmuebleViewSet, basename="crud")
-
-
+router.register(r"favoritos", FavoritoViewSet, basename="favoritos")
+router.register(r"visitas", VisitaViewSet, basename="visitas")
 urlpatterns = [
     path("inmuebles/", include(router.urls)),
     path("inmuebles/contactar/", ContactoDueñoView.as_view()),

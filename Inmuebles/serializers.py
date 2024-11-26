@@ -4,6 +4,7 @@ from Ubicacion.serializers import DistritoSerializer
 from Usuarios.models import Usuario
 from .models import (
     Caracteristica,
+    Favorito,
     TipoAntiguedad,
     TipoInmueble,
     SubTipoInmueble,
@@ -534,4 +535,39 @@ class InmuebleCrudSerializer(serializers.ModelSerializer):
                     inmueble=instance, **ubicacion_data
                 )
 
+        return instance
+
+
+class FavoritoSerializer(serializers.ModelSerializer):
+    inmueble = serializers.StringRelatedField(source="inmueble.slug", read_only=True)
+    slug = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = Favorito
+        fields = [
+            "id",
+            "inmueble",
+            "slug",
+        ]
+
+    def create(self, validated_data):
+        usuario = self.context["request"].user
+        inmueble = Inmueble.objects.get(slug=validated_data["slug"])
+        fav = Favorito.objects.get_or_create(usuario=usuario, inmueble=inmueble)
+        return fav
+
+
+class VisitaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inmueble
+        fields = [
+            "slug",
+        ]
+        read_only_fields = [
+            "slug",
+        ]
+
+    def update(self, instance, validated_data):
+        instance.num_visitas += 1
+        instance.save()
         return instance

@@ -11,7 +11,6 @@ from .models import (
     PlanoInmueble,
     UbicacionInmueble,
     Favorito,
-    Visita,
 )
 
 admin.site.register(Caracteristica)
@@ -25,4 +24,3 @@ admin.site.register(ImagenInmueble)
 admin.site.register(PlanoInmueble)
 admin.site.register(UbicacionInmueble)
 admin.site.register(Favorito)
-admin.site.register(Visita)

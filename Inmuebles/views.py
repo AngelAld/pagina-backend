@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from Inmuebles.filters import InmuebleFilterSet
 from .models import (
     Caracteristica,
+    Favorito,
     TipoAntiguedad,
     TipoInmueble,
     SubTipoInmueble,
@@ -16,6 +17,7 @@ from .models import (
 )
 from .serializers import (
     CaracteristicaSerializer,
+    FavoritoSerializer,
     InmueblePreviewSerializer,
     TipoAntiguedadSerializer,
     TipoInmuebleSerializer,
@@ -24,6 +26,7 @@ from .serializers import (
     TipoOperacionSerializer,
     InmuebleListSerializer,
     InmuebleDetalleSerializer,
+    VisitaSerializer,
     ContactoDueñoSerializer,
     CRUDListaSerializer,
     PublicarInmuebleSerializer,
@@ -238,3 +241,26 @@ class CrudInmuebleViewSet(
 
     def perform_create(self, serializer):
         serializer.save(dueño=self.request.user)
+
+
+class FavoritoViewSet(ModelViewSet):
+    queryset = Favorito.objects.all()
+    serializer_class = FavoritoSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["inmueble__slug"]
+    http_method_names = ["get", "post", "delete"]
+
+    def get_queryset(self):
+        return Favorito.objects.filter(
+            usuario=self.request.user,
+        )
+
+
+class VisitaViewSet(UpdateModelMixin, RetrieveModelMixin, GenericViewSet):
+    queryset = Inmueble.objects.all()
+    serializer_class = VisitaSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = LimitOffsetPagination
+    lookup_field = "slug"

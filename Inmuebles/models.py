@@ -106,6 +106,8 @@ class Inmueble(models.Model):
     )
     caracteristicas = models.ManyToManyField(Caracteristica, blank=True)
 
+    num_visitas = models.PositiveBigIntegerField(default=0)
+
     @property
     def portada(self) -> str:
         return (
@@ -117,10 +119,6 @@ class Inmueble(models.Model):
     @property
     def num_favoritos(self) -> int:
         return self.favoritos.count()
-
-    @property
-    def num_visitas(self) -> int:
-        return self.visitas.count()
 
     def save(self, **kwargs):
         slug_base = slugify(self.titulo or "Inmueble")
@@ -188,18 +186,8 @@ class Favorito(models.Model):
         Inmueble, on_delete=models.CASCADE, related_name="favoritos"
     )
 
+    class Meta:
+        unique_together = ("usuario", "inmueble")
+
     def __str__(self):
         return f"{self.usuario} - {self.inmueble}"
-
-
-class Visita(models.Model):
-    usuario = models.ForeignKey(
-        Usuario, on_delete=models.CASCADE, related_name="visitas"
-    )
-    inmueble = models.ForeignKey(
-        Inmueble, on_delete=models.CASCADE, related_name="visitas"
-    )
-    fecha = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.usuario} - {self.inmueble} - {self.fecha}"
