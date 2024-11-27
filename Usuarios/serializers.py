@@ -654,3 +654,21 @@ class LoginEmailSerializer(serializers.ModelSerializer):
         )
         login(request, usuario)
         return usuario
+
+
+class PerfilVistaSerializer(serializers.ModelSerializer):
+    perfil_particular = PerfilParticularInmueblesSerializer(allow_null=True)
+    perfil_inmobiliaria = PerfilInmobiliariaSerializer(allow_null=True)
+    perfil_empleado = PerfilEmpleadoInmobiliariaSerializer(allow_null=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "perfil_particular",
+            "perfil_inmobiliaria",
+            "perfil_empleado",
+        ]

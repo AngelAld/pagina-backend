@@ -31,6 +31,7 @@ from .serializers import (
     CRUDListaSerializer,
     PublicarInmuebleSerializer,
     InmuebleCrudSerializer,
+    InmuebleMapSerializer,
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import GenericViewSet
@@ -100,7 +101,7 @@ class TipoOperacionViewSet(ModelViewSet):
     search_fields = ["nombre", "descripcion"]
 
 
-class InmuebleListaViewSet(ListModelMixin, GenericViewSet):
+class InmuebleListaViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
     queryset = Inmueble.objects.all()
     serializer_class = InmuebleListSerializer
     pagination_class = LimitOffsetPagination
@@ -119,6 +120,41 @@ class InmuebleListaViewSet(ListModelMixin, GenericViewSet):
         "ubicacion__distrito__nombre",
         "ubicacion__distrito__provincia__nombre",
         "ubicacion__distrito__provincia__departamento__nombre",
+        "dueño",
+    ]
+    ordering_fields = [
+        "fecha_actualizacion",
+        "precio_soles",
+        "precio_dolares",
+    ]
+    ordering = ["-fecha_actualizacion"]
+
+    def get_queryset(self):
+        return Inmueble.objects.filter(
+            estado__nombre="Publicado",
+        )
+
+
+class InmuebleMapaViewSet(ListModelMixin, GenericViewSet):
+    queryset = Inmueble.objects.all()
+    serializer_class = InmuebleMapSerializer
+    pagination_class = LimitOffsetPagination
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    filterset_class = InmuebleFilterSet
+    lookup_field = "slug"
+    search_fields = [
+        "slug",
+        "titulo",
+        "estado__nombre",
+        "descripcion",
+        "tipo_operacion__nombre",
+        "tipo_antiguedad__nombre",
+        "subtipo_inmueble__nombre",
+        "caracteristicas__nombre",
+        "ubicacion__distrito__nombre",
+        "ubicacion__distrito__provincia__nombre",
+        "ubicacion__distrito__provincia__departamento__nombre",
+        "dueño",
     ]
     ordering_fields = [
         "fecha_actualizacion",

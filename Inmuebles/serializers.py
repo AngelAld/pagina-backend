@@ -112,6 +112,23 @@ class InmuebleListSerializer(serializers.ModelSerializer):
         ]
 
 
+class InmuebleMapSerializer(serializers.ModelSerializer):
+    long = serializers.StringRelatedField(
+        source="ubicacion.longitud",
+    )
+    lat = serializers.StringRelatedField(
+        source="ubicacion.latitud",
+    )
+
+    class Meta:
+        model = Inmueble
+        fields = [
+            "slug",
+            "lat",
+            "long",
+        ]
+
+
 class ImagenInmuebleSerializer(serializers.ModelSerializer):
     class Meta:
         model = ImagenInmueble
@@ -153,7 +170,12 @@ class DueñoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Usuario
-        fields = ["nombre", "email", "telefono"]
+        fields = [
+            "id",
+            "nombre",
+            "email",
+            "telefono",
+        ]
 
     def get_nombre(self, obj) -> str:
         if hasattr(obj, "perfil_particular"):

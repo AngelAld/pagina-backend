@@ -14,6 +14,7 @@ from .views import (
     PerfilProfesionalServiciosView,
     ConfirmarEmailView,
     ReenviarEmailView,
+    PerfilVistaView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -27,7 +28,7 @@ auth.register("login", LoginEmailView, basename="Iniciar sesión con email")
 # Tipos
 tipos.register("usuarios", ListaTiposUsuariosView)
 router.register("inmobiliaria-empleados", PerfilEmpleadoInmobiliariaView)
-
+router.register("", PerfilVistaView, basename="perfil")
 perfiles = [
     path("cliente/", PerfilClienteView.as_view(), name="perfil cliente"),
     path(
