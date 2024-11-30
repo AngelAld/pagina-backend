@@ -398,10 +398,16 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
 
 class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField()
+    entidad_nombre = serializers.StringRelatedField(
+        source="entidad.nombre", read_only=True
+    )
 
     class Meta:
         model = PerfilAgentePrestamos
-        fields = ["avatar", "telefono", "plan", "entidad"]
+        fields = ["avatar", "telefono", "plan", "entidad", "entidad_nombre"]
+        extra_kwargs = {
+            "entidad": {"write_only": True},
+        }
 
 
 class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
