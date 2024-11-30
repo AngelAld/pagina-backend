@@ -574,22 +574,26 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         credential = validated_data.get("credential")
         request = self.context.get("request")
         google_user_data = id_token.verify_oauth2_token(credential, requests.Request())
-        tipo_usuario = validated_data.pop("tipo_usuario", None)
         email = google_user_data.get("email")
         nombres = google_user_data.get("given_name")
         apellidos = google_user_data.get("family_name")
+        tipo_usuario = validated_data.pop("tipo_usuario", None)
+        if tipo_usuario is None:
+            try:
+                usuario = Usuario.objects.get(email=email)
+                login(request, usuario)
+                return usuario
+            except Usuario.DoesNotExist:
+                raise ValidationError("Este email no está registrado")
 
-        usuario, created = Usuario.objects.get_or_create(
+        usuario, _ = Usuario.objects.get_or_create(
             email=email,
             defaults={
                 "nombres": nombres,
                 "apellidos": apellidos,
             },
         )
-        if created:
-            if not tipo_usuario:
-                tipo_usuario = TipoUsuario.objects.get(nombre="Cliente")
-            usuario.tipo_usuario.add(tipo_usuario)
+
         provider = AuthProvider.objects.get(nombre="google")
         usuario.provider.add(provider)
         usuario.is_verified = True

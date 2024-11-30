@@ -315,6 +315,15 @@ class CRUDListaSerializer(serializers.ModelSerializer):
     tipo_inmueble = serializers.StringRelatedField(
         source="tipo_inmueble.nombre",
     )
+    subtipo_inmueble = serializers.StringRelatedField(
+        source="subtipo_inmueble.nombre",
+    )
+    tipo_operacion = serializers.StringRelatedField(
+        source="tipo_operacion.nombre",
+    )
+    tipo_antiguedad = serializers.StringRelatedField(
+        source="tipo_antiguedad.nombre",
+    )
     calle = serializers.StringRelatedField(
         source="ubicacion.calle",
     )
@@ -332,8 +341,12 @@ class CRUDListaSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "slug",
+            "titulo",
             "portada",
             "tipo_inmueble",
+            "subtipo_inmueble",
+            "fecha_actualizacion",
+            "tipo_operacion",
             "precio_soles",
             "precio_dolares",
             "calle",
@@ -341,6 +354,10 @@ class CRUDListaSerializer(serializers.ModelSerializer):
             "num_visitas",
             "num_favoritos",
             "estado",
+            "habitaciones",
+            "area_total",
+            "tipo_antiguedad",
+            "años",
         ]
 
 
