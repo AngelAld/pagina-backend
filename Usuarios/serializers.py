@@ -327,9 +327,12 @@ class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         write_only=True,
         allow_null=True,
     )
-    avatar_url = serializers.StringRelatedField(
-        source="avatar.url", read_only=True, allow_null=True
-    )
+    avatar_url = serializers.SerializerMethodField()
+
+    def get_avatar_url(self, obj) -> str | None:
+        if obj.avatar:
+            return obj.avatar.url
+        return None
 
     class Meta:
         model = PerfilEmpleadoInmobiliaria
@@ -341,9 +344,7 @@ class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
 
 
 class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
-    perfil_empleado = PerfilEmpleadoInmobiliariaSerializer(
-        required=False,
-    )
+    perfil_empleado = PerfilEmpleadoInmobiliariaSerializer()
 
     class Meta:
         model = Usuario
@@ -372,16 +373,19 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         perfil_data = validated_data.pop("perfil_empleado")
         tipo_usuario = TipoUsuario.objects.get(nombre="Empleado Inmobiliaria")
         password = validated_data.pop("password")
+
         usuario = Usuario.objects.create(
             **validated_data,
         )
         usuario.set_password(password)
         usuario.tipo_usuario.add(tipo_usuario)
+
         PerfilEmpleadoInmobiliaria.objects.create(
             usuario=usuario,
             inmobiliaria=inmobiliaria,
             **perfil_data,
         )
+
         usuario.save()
         return usuario
 
