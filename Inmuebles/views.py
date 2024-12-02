@@ -329,6 +329,5 @@ class FavoritoViewSet(ModelViewSet):
 class VisitaViewSet(UpdateModelMixin, RetrieveModelMixin, GenericViewSet):
     queryset = Inmueble.objects.all()
     serializer_class = VisitaSerializer
-    permission_classes = [IsAuthenticated]
     pagination_class = LimitOffsetPagination
     lookup_field = "slug"

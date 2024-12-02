@@ -183,7 +183,10 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
 
 
 class PerfilParticularInmueblesSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=False)
+    avatar = Base64ImageField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = PerfilParticularInmuebles
@@ -249,7 +252,9 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
 
 
 class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField()
+    avatar = Base64ImageField(
+        required=False,
+    )
 
     class Meta:
         model = PerfilInmobiliaria
@@ -670,6 +675,7 @@ class PerfilVistaSerializer(serializers.ModelSerializer):
     perfil_particular = PerfilParticularInmueblesSerializer(allow_null=True)
     perfil_inmobiliaria = PerfilInmobiliariaSerializer(allow_null=True)
     perfil_empleado = PerfilEmpleadoInmobiliariaSerializer(allow_null=True)
+    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
 
     class Meta:
         model = Usuario
@@ -681,4 +687,5 @@ class PerfilVistaSerializer(serializers.ModelSerializer):
             "perfil_particular",
             "perfil_inmobiliaria",
             "perfil_empleado",
+            "tipo_usuario",
         ]

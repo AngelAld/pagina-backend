@@ -43,6 +43,7 @@ class InmuebleFilterSet(FilterSet):
             "ubicacion__distrito",
             "ubicacion__distrito__provincia",
             "ubicacion__distrito__provincia__departamento",
+            "dueño",
         ]
 
     def filter_caracteristicas(self, queryset, name, value):
