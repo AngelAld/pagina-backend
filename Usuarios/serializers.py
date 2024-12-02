@@ -325,6 +325,7 @@ class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(
         required=False,
         write_only=True,
+        allow_null=True,
     )
     avatar_url = serializers.StringRelatedField(
         source="avatar.url", read_only=True, allow_null=True
