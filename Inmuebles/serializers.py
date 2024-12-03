@@ -19,6 +19,7 @@ from drf_extra_fields.fields import Base64ImageField
 from django.db.transaction import atomic
 
 
+# comentario para pushear
 class CaracteristicaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Caracteristica
