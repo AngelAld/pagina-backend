@@ -60,11 +60,15 @@ class UserUpdate:
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         instance.refresh_from_db()
-    
+
         if getattr(instance, "_prefetched_objects_cache", None):
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    def patch(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", True)
+        return self.put(request, partial=partial, *args, **kwargs)
 
     def perform_update(self, serializer):
         serializer.save()

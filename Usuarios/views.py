@@ -104,7 +104,7 @@ class PerfilInmobiliariaView(UserViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioInmobiliariaSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get", "post", "put", "delete"]
+    http_method_names = ["get", "post", "put", "patch", "delete"]
 
     def get_queryset(self):
         return Usuario.objects.filter(id=self.request.user.id)

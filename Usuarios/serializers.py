@@ -187,17 +187,19 @@ class PerfilParticularInmueblesSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    banner = Base64ImageField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = PerfilParticularInmuebles
         fields = [
             "avatar",
+            "banner",
             "telefono",
             "plan",
         ]
-        extra_kwargs = {
-            "avatar": {"required": False},
-        }
 
 
 class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
@@ -250,16 +252,43 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
         )
         return usuario
 
+    @atomic
+    def update(self, instance: Usuario, validated_data):
+        instance.email = validated_data.get("email")
+        instance.nombres = validated_data.get("nombres")
+        instance.apellidos = validated_data.get("apellidos")
+        instance.save()
+        perfil = PerfilParticularInmuebles.objects.get(usuario=instance)
+        perfil_data = validated_data.get("perfil_particular", None)
+        if perfil_data is not None:
+            if "plan" in perfil_data:
+                perfil.plan = perfil_data.get("plan")
+            if "telefono" in perfil_data:
+                perfil.telefono = perfil_data.get("telefono")
+            if "avatar" in perfil_data:
+                perfil.avatar = perfil_data.get("avatar")
+            if "banner" in perfil_data:
+                perfil.banner = perfil_data.get("banner")
+            perfil.save()
+        return instance
+
 
 class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(
         required=False,
+        write_only=True,
+    )
+
+    banner = Base64ImageField(
+        required=False,
+        write_only=True,
     )
 
     class Meta:
         model = PerfilInmobiliaria
         fields = [
             "avatar",
+            "banner",
             "razon_social",
             "ruc",
             "telefono",
@@ -267,9 +296,56 @@ class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
             "plan",
         ]
 
-        read_only_fields = [
-            "aprobada",
-        ]
+        extra_kwargs = {
+            "aprobada": {"read_only": True},
+            "razon_social": {"required": False},
+            "ruc": {"required": False},
+        }
+
+    def validate(self, attrs):
+        print("###################")
+        print(attrs)
+        print("###################")
+        return super().validate(attrs)
+
+    def validate_razon_social(self, value):
+        if self.context["request"]._request.method == "POST":
+            if self.Meta.model.objects.filter(razon_social=value).exists():
+                raise ValidationError("Esta razon social ya esta registrada")
+        return value
+
+    def validate_ruc(self, value):
+        if self.context["request"]._request.method == "POST":
+            if self.Meta.model.objects.filter(ruc=value).exists():
+                raise ValidationError("Este ruc ya esta registrado")
+        return value
+
+    def validate_avatar(self, value):
+        print("###################")
+        print(value)
+        print("###################")
+        request = self.context["request"]
+        if request.method == "POST" and not isinstance(value, str):
+            raise ValidationError("El avatar debe ser una imagen en base64")
+        if request.method == "PUT" and not (
+            isinstance(value, str) or isinstance(value, bytes)
+        ):
+            raise ValidationError(
+                "El avatar debe ser una imagen en base64 o una cadena"
+            )
+        return value
+
+    def validate_banner(self, value):
+        request = self.context["request"]
+        if request.method == "POST" and not isinstance(value, str):
+            raise ValidationError("El banner debe ser una imagen en base64")
+        if request.method == "PUT" and not (
+            isinstance(value, str) or isinstance(value, bytes)
+        ):
+            raise ValidationError(
+                "El banner debe ser una imagen en base64 o una cadena"
+            )
+        return value
 
 
 class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
@@ -298,13 +374,18 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
-        if hasattr(usuario, "perfil_inmobiliaria"):
-            raise ValidationError("Ya tienes un perfil de inmobiliaria")
-        return attrs
+    # def validate(self, attrs):
+    #     usuario: Usuario = self.context.get("request").user
+    #     if usuario is None:
+    #         raise ValidationError("No se ha iniciado sesión")
+    #     if self.context["request"]._request.method == "POST" and hasattr(
+    #         usuario, "perfil_inmobiliaria"
+    #     ):
+    #         raise ValidationError("Ya tienes un perfil de inmobiliaria")
+    #     return attrs
+
+    # def validate_perfil_inmobiliaria(self, value):
+    #     return value
 
     @atomic
     def create(self, validated_data):
@@ -319,6 +400,26 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
         )
         usuario.save()
         return usuario
+
+    @atomic
+    def update(self, instance: Usuario, validated_data):
+        print(validated_data)
+        instance.email = validated_data.get("email", instance.email)
+        instance.nombres = validated_data.get("nombres", instance.nombres)
+        instance.apellidos = validated_data.get("apellidos", instance.apellidos)
+
+        instance.save()
+        perfil = PerfilInmobiliaria.objects.get(usuario=instance)
+        perfil_data = validated_data.get("perfil_inmobiliaria", None)
+        if perfil_data is None:
+            return instance
+        perfil.telefono = perfil_data.get("telefono", perfil.telefono)
+        if "avatar" in perfil_data:
+            perfil.avatar = perfil_data.get("avatar")
+        if "banner" in perfil_data:
+            perfil.banner = perfil_data.get("banner")
+        perfil.save()
+        return instance
 
 
 class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):

@@ -95,6 +95,7 @@ class PerfilParticularInmuebles(models.Model):
     plan = models.ForeignKey(
         PlanInmuebles, on_delete=models.PROTECT, related_name="particulares"
     )
+    banner = models.ImageField(upload_to="banner/particulares", null=True, blank=True)
 
     def __str__(self):
         return self.usuario.nombre_completo
@@ -105,6 +106,7 @@ class PerfilInmobiliaria(models.Model):
         Usuario, on_delete=models.CASCADE, related_name="perfil_inmobiliaria"
     )
     avatar = models.ImageField(upload_to="avatar/inmobiliarias", null=True, blank=True)
+    banner = models.ImageField(upload_to="banner/inmobiliarias", null=True, blank=True)
     razon_social = models.CharField(max_length=255)
     ruc = models.CharField(max_length=11, unique=True)
     telefono = models.CharField(max_length=9)
@@ -120,6 +122,7 @@ class PerfilEmpleadoInmobiliaria(models.Model):
         Usuario, on_delete=models.CASCADE, related_name="perfil_empleado"
     )
     avatar = models.ImageField(upload_to="avatar/empleados", null=True, blank=True)
+    banner = models.ImageField(upload_to="banner/empleados", null=True, blank=True)
 
     telefono = models.CharField(max_length=9)
     inmobiliaria = models.ForeignKey(
