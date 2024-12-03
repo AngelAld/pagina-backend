@@ -276,12 +276,10 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
 class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(
         required=False,
-        write_only=True,
     )
 
     banner = Base64ImageField(
         required=False,
-        write_only=True,
     )
 
     class Meta:
@@ -302,12 +300,6 @@ class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
             "ruc": {"required": False},
         }
 
-    def validate(self, attrs):
-        print("###################")
-        print(attrs)
-        print("###################")
-        return super().validate(attrs)
-
     def validate_razon_social(self, value):
         if self.context["request"]._request.method == "POST":
             if self.Meta.model.objects.filter(razon_social=value).exists():
@@ -318,33 +310,6 @@ class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
         if self.context["request"]._request.method == "POST":
             if self.Meta.model.objects.filter(ruc=value).exists():
                 raise ValidationError("Este ruc ya esta registrado")
-        return value
-
-    def validate_avatar(self, value):
-        print("###################")
-        print(value)
-        print("###################")
-        request = self.context["request"]
-        if request.method == "POST" and not isinstance(value, str):
-            raise ValidationError("El avatar debe ser una imagen en base64")
-        if request.method == "PUT" and not (
-            isinstance(value, str) or isinstance(value, bytes)
-        ):
-            raise ValidationError(
-                "El avatar debe ser una imagen en base64 o una cadena"
-            )
-        return value
-
-    def validate_banner(self, value):
-        request = self.context["request"]
-        if request.method == "POST" and not isinstance(value, str):
-            raise ValidationError("El banner debe ser una imagen en base64")
-        if request.method == "PUT" and not (
-            isinstance(value, str) or isinstance(value, bytes)
-        ):
-            raise ValidationError(
-                "El banner debe ser una imagen en base64 o una cadena"
-            )
         return value
 
 
@@ -414,6 +379,8 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
         if perfil_data is None:
             return instance
         perfil.telefono = perfil_data.get("telefono", perfil.telefono)
+        perfil.avatar.delete(save=True)
+        perfil.banner.delete(save=True)
         if "avatar" in perfil_data:
             perfil.avatar = perfil_data.get("avatar")
         if "banner" in perfil_data:

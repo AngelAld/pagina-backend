@@ -44,6 +44,9 @@ INSTALLED_APPS = (
         "Ubicacion",
         "Usuarios",
     ]
+    + [  # To ensure that exceptions inside other apps’ signal handlers do not affect the integrity of file deletions within transactions, django_cleanup should be placed last in INSTALLED_APPS
+        "django_cleanup.apps.CleanupConfig",
+    ]
 )
 
 
