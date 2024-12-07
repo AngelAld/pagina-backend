@@ -5,6 +5,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import status
 from rest_framework.response import Response
 from Inmuebles.filters import InmuebleFilterSet
+from Usuarios.models import Usuario
 from .models import (
     Caracteristica,
     Favorito,
@@ -120,7 +121,6 @@ class InmuebleListaViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet):
         "ubicacion__distrito__nombre",
         "ubicacion__distrito__provincia__nombre",
         "ubicacion__distrito__provincia__departamento__nombre",
-        "dueño",
     ]
     ordering_fields = [
         "fecha_actualizacion",
@@ -277,9 +277,13 @@ class CRUDListaViewSet(ListModelMixin, GenericViewSet, DestroyModelMixin):
     http_method_names = ["get", "delete"]
 
     def get_queryset(self):
-        return Inmueble.objects.filter(
-            dueño=self.request.user,
-        )
+        dueño: Usuario = self.request.user
+        if hasattr(dueño, "perfil_inmobiliaria"):
+            return Inmueble.objects.filter(
+                dueño__perfil_empleado__inmobiliaria=dueño.perfil_inmobiliaria
+            ) | Inmueble.objects.filter(dueño=dueño)
+        else:
+            return Inmueble.objects.filter(dueño=dueño)
 
 
 class PublicarInmuebleView(UpdateModelMixin, GenericViewSet):
@@ -303,9 +307,13 @@ class CrudInmuebleViewSet(
     http_method_names = ["get", "post", "patch"]
 
     def get_queryset(self):
-        return Inmueble.objects.filter(
-            dueño=self.request.user,
-        )
+        dueño: Usuario = self.request.user
+        if hasattr(dueño, "perfil_inmobiliaria"):
+            return Inmueble.objects.filter(
+                dueño__perfil_empleado__inmobiliaria=dueño.perfil_inmobiliaria
+            ) | Inmueble.objects.filter(dueño=dueño)
+        else:
+            return Inmueble.objects.filter(dueño=dueño)
 
     def perform_create(self, serializer):
         serializer.save(dueño=self.request.user)

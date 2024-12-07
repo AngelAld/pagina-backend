@@ -1,4 +1,6 @@
 from django_filters import FilterSet, RangeFilter
+
+from Usuarios.models import Usuario
 from .models import Inmueble
 from django_filters.rest_framework import CharFilter
 from django.db.models import Count, Q
@@ -21,6 +23,7 @@ class InmuebleFilterSet(FilterSet):
     ubicacion__distrito__provincia__departamento = CharFilter(
         method="filter_departamento"
     )
+    dueño = CharFilter(method="filter_dueño")
 
     class Meta:
         model = Inmueble
@@ -45,6 +48,16 @@ class InmuebleFilterSet(FilterSet):
             "ubicacion__distrito__provincia__departamento",
             "dueño",
         ]
+
+    def filter_dueño(self, queryset, name, value):
+        dueño = Usuario.objects.get(pk=value)
+        if hasattr(dueño, "perfil_inmobiliaria"):
+            queryset = queryset.filter(
+                dueño__perfil_empleado__inmobiliaria=dueño.perfil_inmobiliaria
+            ) | queryset.filter(dueño=dueño)
+        else:
+            queryset = queryset.filter(dueño=dueño)
+        return queryset
 
     def filter_caracteristicas(self, queryset, name, value):
         pks = value.split(",")

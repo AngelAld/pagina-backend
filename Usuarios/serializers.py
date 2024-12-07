@@ -274,6 +274,7 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
 
 
 class PerfilInmobiliariaSerializer(serializers.ModelSerializer):
+
     avatar = Base64ImageField(
         required=False,
     )
@@ -391,12 +392,21 @@ class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    inmobiliaria = PerfilInmobiliariaSerializer(
+        read_only=True,
+    )
+
+    inmobiliaria_id = serializers.CharField(
+        source="inmobiliaria.usuario.id", read_only=True
+    )
 
     class Meta:
         model = PerfilEmpleadoInmobiliaria
         fields = [
+            "inmobiliaria_id",
             "avatar",
             "telefono",
+            "inmobiliaria",
         ]
 
 
@@ -444,6 +454,11 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
             inmobiliaria=inmobiliaria,
             **perfil_data,
         )
+
+        usuario.is_verified = True
+
+        provider = AuthProvider.objects.get(nombre="email")
+        usuario.provider.add(provider)
 
         usuario.save()
         return usuario
@@ -696,6 +711,9 @@ class LoginEmailSerializer(serializers.ModelSerializer):
     perfil_profesional = PerfilProfesionalServiciosSerializer(
         required=False, allow_null=True
     )
+    perfil_empleado = PerfilEmpleadoInmobiliariaSerializer(
+        required=False, allow_null=True
+    )
 
     class Meta:
         model = Usuario
@@ -712,6 +730,7 @@ class LoginEmailSerializer(serializers.ModelSerializer):
             "perfil_inmobiliaria",
             "perfil_agente",
             "perfil_profesional",
+            "perfil_empleado",
             "tokens",
         ]
         extra_kwargs = {
