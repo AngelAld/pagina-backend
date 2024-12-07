@@ -339,18 +339,15 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    # def validate(self, attrs):
-    #     usuario: Usuario = self.context.get("request").user
-    #     if usuario is None:
-    #         raise ValidationError("No se ha iniciado sesión")
-    #     if self.context["request"]._request.method == "POST" and hasattr(
-    #         usuario, "perfil_inmobiliaria"
-    #     ):
-    #         raise ValidationError("Ya tienes un perfil de inmobiliaria")
-    #     return attrs
-
-    # def validate_perfil_inmobiliaria(self, value):
-    #     return value
+    def validate(self, attrs):
+        usuario: Usuario = self.context.get("request").user
+        if usuario is None:
+            raise ValidationError("No se ha iniciado sesión")
+        if self.context["request"]._request.method == "POST" and hasattr(
+            usuario, "perfil_inmobiliaria"
+        ):
+            raise ValidationError("Ya tienes un perfil de inmobiliaria")
+        return attrs
 
     @atomic
     def create(self, validated_data):
@@ -392,21 +389,13 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
 class PerfilEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(
         required=False,
-        write_only=True,
         allow_null=True,
     )
-    avatar_url = serializers.SerializerMethodField()
-
-    def get_avatar_url(self, obj) -> str | None:
-        if obj.avatar:
-            return obj.avatar.url
-        return None
 
     class Meta:
         model = PerfilEmpleadoInmobiliaria
         fields = [
             "avatar",
-            "avatar_url",
             "telefono",
         ]
 
@@ -426,7 +415,7 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
             "perfil_empleado",
         ]
         extra_kwargs = {
-            "password": {"write_only": True},
+            "password": {"write_only": True, "required": False},
         }
 
     def validate(self, attrs):
@@ -437,10 +426,12 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
+        password = validated_data.pop("password", None)
+        if password is None:
+            raise ValidationError("Se necesita una contraseña")
         inmobiliaria = self.context.get("request").user.perfil_inmobiliaria
         perfil_data = validated_data.pop("perfil_empleado")
         tipo_usuario = TipoUsuario.objects.get(nombre="Empleado Inmobiliaria")
-        password = validated_data.pop("password")
 
         usuario = Usuario.objects.create(
             **validated_data,
@@ -466,16 +457,22 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         instance.save()
         perfil = PerfilEmpleadoInmobiliaria.objects.get(usuario=instance)
         perfil_data = validated_data.get("perfil_empleado", None)
-        if perfil_data is not None:
-            perfil.telefono = perfil_data.get("telefono")
-            if "avatar" in perfil_data:
-                perfil.avatar = perfil_data.get("avatar")
-            perfil.save()
+        perfil.avatar.delete(save=True)
+        if perfil_data is None:
+            return instance
+        perfil.telefono = perfil_data.get("telefono", perfil.telefono)
+        if "avatar" in perfil_data:
+            perfil.avatar = perfil_data.get("avatar")
+        perfil.save()
+
         return instance
 
 
 class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField()
+    avatar = Base64ImageField(
+        required=False,
+        allow_null=True,
+    )
     entidad_nombre = serializers.StringRelatedField(
         source="entidad.nombre", read_only=True
     )

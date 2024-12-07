@@ -122,7 +122,6 @@ class PerfilEmpleadoInmobiliaria(models.Model):
         Usuario, on_delete=models.CASCADE, related_name="perfil_empleado"
     )
     avatar = models.ImageField(upload_to="avatar/empleados", null=True, blank=True)
-    banner = models.ImageField(upload_to="banner/empleados", null=True, blank=True)
 
     telefono = models.CharField(max_length=9)
     inmobiliaria = models.ForeignKey(
