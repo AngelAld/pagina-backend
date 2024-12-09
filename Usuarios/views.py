@@ -124,7 +124,7 @@ class PerfilEmpleadoInmobiliariaView(ModelViewSet):
         )
 
 
-class PerfilAgentePrestamosView(UserViewSet):
+class PerfilAgenteHipotecarioView(UserViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioAgentePrestamosSerializer
     permission_classes = [IsAuthenticated]

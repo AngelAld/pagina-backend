@@ -9,7 +9,6 @@ from .models import (
     TipoUsuario,
     PerfilParticularInmuebles,
     PerfilInmobiliaria,
-    PerfilAgentePrestamos,
     PerfilEmpleadoInmobiliaria,
     PerfilProfesionalServicios,
 )
@@ -22,6 +21,8 @@ from django.db.transaction import atomic
 from django.contrib.auth import authenticate
 from Planes.models import PlanInmuebles, PlanPrestamos
 from drf_extra_fields.fields import Base64ImageField
+
+from Prestamos.models import PerfilAgenteHipotecario
 
 
 class OnlyMessageSerializer(serializers.Serializer):
@@ -483,7 +484,7 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
         return instance
 
 
-class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
+class PerfilAgenteHipotecarioSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(
         required=False,
         allow_null=True,
@@ -493,7 +494,7 @@ class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = PerfilAgentePrestamos
+        model = PerfilAgenteHipotecario
         fields = ["avatar", "telefono", "plan", "entidad", "entidad_nombre"]
         extra_kwargs = {
             "entidad": {"write_only": True},
@@ -501,7 +502,7 @@ class PerfilAgentePrestamosSerializer(serializers.ModelSerializer):
 
 
 class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
-    perfil_agente = PerfilAgentePrestamosSerializer()
+    perfil_agente = PerfilAgenteHipotecarioSerializer()
     tokens = TokenSerializer(read_only=True)
 
     class Meta:
@@ -541,7 +542,7 @@ class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
 
         usuario.dni = dni
         perfil_data = validated_data.pop("perfil_agente")
-        PerfilAgentePrestamos.objects.create(
+        PerfilAgenteHipotecario.objects.create(
             usuario=usuario,
             **perfil_data,
         )
@@ -618,7 +619,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         required=False, allow_null=True
     )
     perfil_inmobiliaria = PerfilInmobiliariaSerializer(required=False, allow_null=True)
-    perfil_agente = PerfilAgentePrestamosSerializer(required=False, allow_null=True)
+    perfil_agente = PerfilAgenteHipotecarioSerializer(required=False, allow_null=True)
     perfil_profesional = PerfilProfesionalServiciosSerializer(
         required=False, allow_null=True
     )
@@ -707,7 +708,7 @@ class LoginEmailSerializer(serializers.ModelSerializer):
         required=False, allow_null=True
     )
     perfil_inmobiliaria = PerfilInmobiliariaSerializer(required=False, allow_null=True)
-    perfil_agente = PerfilAgentePrestamosSerializer(required=False, allow_null=True)
+    perfil_agente = PerfilAgenteHipotecarioSerializer(required=False, allow_null=True)
     perfil_profesional = PerfilProfesionalServiciosSerializer(
         required=False, allow_null=True
     )

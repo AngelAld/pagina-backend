@@ -8,9 +8,9 @@ from .models import (
     PerfilParticularInmuebles,
     PerfilInmobiliaria,
     PerfilEmpleadoInmobiliaria,
-    PerfilAgentePrestamos,
     PerfilProfesionalServicios,
 )
+from Prestamos.models import PerfilAgenteHipotecario
 
 admin.site.register(Usuario)
 admin.site.register(AuthProvider)
@@ -20,5 +20,5 @@ admin.site.register(PerfilCliente)
 admin.site.register(PerfilParticularInmuebles)
 admin.site.register(PerfilInmobiliaria)
 admin.site.register(PerfilEmpleadoInmobiliaria)
-admin.site.register(PerfilAgentePrestamos)
+admin.site.register(PerfilAgenteHipotecario)
 admin.site.register(PerfilProfesionalServicios)

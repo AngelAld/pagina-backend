@@ -10,7 +10,7 @@ from .views import (
     PerfilParticularInmueblesView,
     PerfilInmobiliariaView,
     PerfilEmpleadoInmobiliariaView,
-    PerfilAgentePrestamosView,
+    PerfilAgenteHipotecarioView,
     PerfilProfesionalServiciosView,
     ConfirmarEmailView,
     ReenviarEmailView,
@@ -39,7 +39,7 @@ perfiles = [
     path("inmobiliaria/", PerfilInmobiliariaView.as_view(), name="perfil inmobiliaria"),
     path(
         "agente-prestamos/",
-        PerfilAgentePrestamosView.as_view(),
+        PerfilAgenteHipotecarioView.as_view(),
         name="perfil agente prestamos",
     ),
     path(

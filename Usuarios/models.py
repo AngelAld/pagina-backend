@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils.translation import gettext_lazy as _
 from Planes.models import PlanInmuebles, PlanPrestamos, PlanServicios
-from Prestamos.models import EntidadBancaria
+
 from .manager import UserManager
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -130,16 +130,6 @@ class PerfilEmpleadoInmobiliaria(models.Model):
 
     def __str__(self):
         return self.usuario.nombre_completo
-
-
-class PerfilAgentePrestamos(models.Model):
-    usuario = models.OneToOneField(
-        Usuario, on_delete=models.CASCADE, related_name="perfil_agente"
-    )
-    avatar = models.ImageField(upload_to="avatar/agentes", null=True, blank=True)
-    telefono = models.CharField(max_length=9)
-    plan = models.ForeignKey(PlanPrestamos, on_delete=models.PROTECT)
-    entidad = models.ForeignKey(EntidadBancaria, on_delete=models.PROTECT)
 
 
 class PerfilProfesionalServicios(models.Model):
