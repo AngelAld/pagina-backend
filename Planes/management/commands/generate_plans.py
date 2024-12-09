@@ -72,16 +72,16 @@ class Command(BaseCommand):
             self.style.SUCCESS("Plan Basico de clientes para prestamos creado")
         )
         PlanPrestamos.objects.get_or_create(
-            nombre="Plan Agente",
+            nombre="Plan Agente Hipotecario",
             defaults={
-                "descripcion": "Plan basico para agentes de prestamos",
+                "descripcion": "Plan basico para agentes hipotecarios",
                 "precio": 0,
                 "max_clientes": 100,
                 "max_alertas": 5,
             },
         )
         self.stdout.write(
-            self.style.SUCCESS("Plan Basico de agentes de prestamos creado")
+            self.style.SUCCESS("Plan Basico de agentes de hipotecarios creado")
         )
         PlanServicios.objects.get_or_create(
             nombre="Plan Cliente",

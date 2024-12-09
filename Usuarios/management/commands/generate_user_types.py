@@ -12,7 +12,7 @@ class Command(BaseCommand):
             "Agente Inmobiliario",
             "Inmobiliaria",
             "Empleado Inmobiliaria",
-            "Agente Prestamos",
+            "Agente Hipotecario",
             "Profesional Servicios",
         ]
         for tipo in tipos:

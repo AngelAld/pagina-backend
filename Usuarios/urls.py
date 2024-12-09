@@ -38,7 +38,7 @@ perfiles = [
     ),
     path("inmobiliaria/", PerfilInmobiliariaView.as_view(), name="perfil inmobiliaria"),
     path(
-        "agente-prestamos/",
+        "agente-hipotecario/",
         PerfilAgenteHipotecarioView.as_view(),
         name="perfil agente prestamos",
     ),
