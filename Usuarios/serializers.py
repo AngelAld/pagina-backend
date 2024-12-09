@@ -16,7 +16,6 @@ from django.contrib.auth.password_validation import validate_password
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from Api.settings import GOOGLE_CLIENT_ID
-from django.contrib.auth import login
 from django.db.transaction import atomic
 from django.contrib.auth import authenticate
 from Planes.models import PlanInmuebles, PlanPrestamos
@@ -135,15 +134,12 @@ class UsuarioClienteSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
-        return attrs
-
     @atomic
     def create(self, validated_data):
-        usuario: Usuario = self.context.get("request").user
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise ValidationError("No se ha iniciado sesión")
+        usuario: Usuario = request.user
         if hasattr(usuario, "perfil_cliente"):
             raise ValidationError("Ya tienes un perfil de cliente")
         dni = validated_data.pop("dni")
@@ -229,17 +225,14 @@ class UsuarioParticularInmueblesSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
-        if hasattr(usuario, "perfil_particular"):
-            raise ValidationError("Ya tienes un perfil de inmuebles")
-        return attrs
-
     @atomic
     def create(self, validated_data):
-        usuario: Usuario = self.context.get("request").user
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise ValidationError("No se ha iniciado sesión")
+        usuario: Usuario = request.user
+        if hasattr(usuario, "perfil_cliente"):
+            raise ValidationError("Ya tienes este perfil")
         dni = validated_data.pop("dni")
         usuario.dni = dni
         perfil_data = validated_data.pop("perfil_particular")
@@ -341,19 +334,14 @@ class UsuarioInmobiliariaSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
-        if self.context["request"]._request.method == "POST" and hasattr(
-            usuario, "perfil_inmobiliaria"
-        ):
-            raise ValidationError("Ya tienes un perfil de inmobiliaria")
-        return attrs
-
     @atomic
     def create(self, validated_data):
-        usuario: Usuario = self.context.get("request").user
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise ValidationError("No se ha iniciado sesión")
+        usuario: Usuario = request.user
+        if hasattr(usuario, "perfil_cliente"):
+            raise ValidationError("Ya tienes este perfil")
         dni = validated_data.pop("dni")
 
         usuario.dni = dni
@@ -429,18 +417,15 @@ class UsuarioEmpleadoInmobiliariaSerializer(serializers.ModelSerializer):
             "password": {"write_only": True, "required": False},
         }
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if not hasattr(usuario, "perfil_inmobiliaria"):
-            raise ValidationError("No tienes un perfil de inmobiliaria")
-        return attrs
-
     @atomic
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         if password is None:
             raise ValidationError("Se necesita una contraseña")
-        inmobiliaria = self.context.get("request").user.perfil_inmobiliaria
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise ValidationError("No se ha iniciado sesión")
+        inmobiliaria = request.user.perfil_inmobiliaria
         perfil_data = validated_data.pop("perfil_empleado")
         tipo_usuario = TipoUsuario.objects.get(nombre="Empleado Inmobiliaria")
 
@@ -501,8 +486,10 @@ class PerfilAgenteHipotecarioSerializer(serializers.ModelSerializer):
         }
 
 
-class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
-    perfil_agente = PerfilAgenteHipotecarioSerializer()
+class UsuarioAgenteHipotecarioSerializer(serializers.ModelSerializer):
+    perfil_agente_hipotecario = PerfilAgenteHipotecarioSerializer(
+        required=False,
+    )
     tokens = TokenSerializer(read_only=True)
 
     class Meta:
@@ -515,7 +502,7 @@ class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
             "dni",
             "is_verified",
             "tipo_usuario",
-            "perfil_agente",
+            "perfil_agente_hipotecario",
             "tokens",
         ]
         read_only_fields = [
@@ -527,21 +514,21 @@ class UsuarioAgentePrestamosSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
-        if hasattr(usuario, "perfil_agente"):
-            raise ValidationError("Ya tienes un perfil de agente de prestamos")
-        return attrs
-
     @atomic
     def create(self, validated_data):
-        usuario: Usuario = self.context.get("request").user
+        print("##########")
+        print(validated_data)
+        print("##########")
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise ValidationError("No se ha iniciado sesión")
+        usuario: Usuario = request.user
+        if hasattr(usuario, "perfil_cliente"):
+            raise ValidationError("Ya tienes este perfil")
         dni = validated_data.pop("dni")
 
         usuario.dni = dni
-        perfil_data = validated_data.pop("perfil_agente")
+        perfil_data = validated_data.pop("perfil_agente_hipotecario")
         PerfilAgenteHipotecario.objects.create(
             usuario=usuario,
             **perfil_data,
@@ -582,17 +569,14 @@ class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
             "tipo_usuario",
         ]
 
-    def validate(self, attrs):
-        usuario: Usuario = self.context.get("request").user
-        if usuario is None:
-            raise ValidationError("No se ha iniciado sesión")
-        if hasattr(usuario, "perfil_profesional"):
-            raise ValidationError("Ya tienes un perfil de profesional de servicios")
-        return attrs
-
     @atomic
     def create(self, validated_data):
-        usuario: Usuario = self.context.get("request").user
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise ValidationError("No se ha iniciado sesión")
+        usuario: Usuario = request.user
+        if hasattr(usuario, "perfil_cliente"):
+            raise ValidationError("Ya tienes este perfil")
         dni = validated_data.pop("dni")
 
         usuario.dni = dni
@@ -619,7 +603,9 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         required=False, allow_null=True
     )
     perfil_inmobiliaria = PerfilInmobiliariaSerializer(required=False, allow_null=True)
-    perfil_agente = PerfilAgenteHipotecarioSerializer(required=False, allow_null=True)
+    perfil_agente_hipotecario = PerfilAgenteHipotecarioSerializer(
+        required=False, allow_null=True
+    )
     perfil_profesional = PerfilProfesionalServiciosSerializer(
         required=False, allow_null=True
     )
@@ -639,7 +625,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
             "perfil_cliente",
             "perfil_particular",
             "perfil_inmobiliaria",
-            "perfil_agente",
+            "perfil_agente_hipotecario",
             "perfil_profesional",
             "tokens",
         ]
@@ -669,7 +655,6 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
     @atomic
     def create(self, validated_data):
         credential = validated_data.get("credential")
-        request = self.context.get("request")
         google_user_data = id_token.verify_oauth2_token(credential, requests.Request())
         email = google_user_data.get("email")
         nombres = google_user_data.get("given_name")
@@ -678,7 +663,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         if tipo_usuario is None:
             try:
                 usuario = Usuario.objects.get(email=email)
-                login(request, usuario)
+
                 return usuario
             except Usuario.DoesNotExist:
                 raise ValidationError("Este email no está registrado")
@@ -695,7 +680,6 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         usuario.provider.add(provider)
         usuario.is_verified = True
         usuario.save()
-        login(request, usuario)
         return usuario
 
 
@@ -708,7 +692,9 @@ class LoginEmailSerializer(serializers.ModelSerializer):
         required=False, allow_null=True
     )
     perfil_inmobiliaria = PerfilInmobiliariaSerializer(required=False, allow_null=True)
-    perfil_agente = PerfilAgenteHipotecarioSerializer(required=False, allow_null=True)
+    perfil_agente_hipotecario = PerfilAgenteHipotecarioSerializer(
+        required=False, allow_null=True
+    )
     perfil_profesional = PerfilProfesionalServiciosSerializer(
         required=False, allow_null=True
     )
@@ -729,7 +715,7 @@ class LoginEmailSerializer(serializers.ModelSerializer):
             "perfil_cliente",
             "perfil_particular",
             "perfil_inmobiliaria",
-            "perfil_agente",
+            "perfil_agente_hipotecario",
             "perfil_profesional",
             "perfil_empleado",
             "tokens",
@@ -744,20 +730,12 @@ class LoginEmailSerializer(serializers.ModelSerializer):
             "tokens": {"read_only": True},
         }
 
-    def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-        usuario = authenticate(email=email, password=password)
-        if usuario is None:
-            raise ValidationError("Credenciales inválidas")
-        return attrs
-
     def create(self, validated_data):
-        request = self.context.get("request")
         usuario = authenticate(
             email=validated_data.get("email"), password=validated_data.get("password")
         )
-        login(request, usuario)
+        if usuario is None:
+            raise ValidationError("Credenciales inválidas")
         return usuario
 
 

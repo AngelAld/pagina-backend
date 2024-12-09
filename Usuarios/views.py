@@ -10,7 +10,7 @@ from .serializers import (
     UsuarioParticularInmueblesSerializer,
     UsuarioInmobiliariaSerializer,
     UsuarioEmpleadoInmobiliariaSerializer,
-    UsuarioAgentePrestamosSerializer,
+    UsuarioAgenteHipotecarioSerializer,
     UsuarioProfesionalServiciosSerializer,
     PerfilVistaSerializer,
 )
@@ -83,11 +83,8 @@ class PerfilClienteView(UserViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
 
-    def get_object(self):
-        pass
-
     def get_queryset(self):
-        return Usuario.objects.filter(id=self.request.user.id)
+        return Usuario.objects.filter(id=self.request.user.pk)
 
 
 class PerfilParticularInmueblesView(UserViewSet):
@@ -97,7 +94,7 @@ class PerfilParticularInmueblesView(UserViewSet):
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(id=self.request.user.id)
+        return Usuario.objects.filter(pk=self.request.user.pk)
 
 
 class PerfilInmobiliariaView(UserViewSet):
@@ -107,7 +104,7 @@ class PerfilInmobiliariaView(UserViewSet):
     http_method_names = ["get", "post", "put", "patch", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(id=self.request.user.id)
+        return Usuario.objects.filter(pk=self.request.user.pk)
 
 
 class PerfilEmpleadoInmobiliariaView(ModelViewSet):
@@ -120,19 +117,19 @@ class PerfilEmpleadoInmobiliariaView(ModelViewSet):
 
     def get_queryset(self):
         return Usuario.objects.filter(
-            perfil_empleado__inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+            perfil_empleado__inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
         )
 
 
 class PerfilAgenteHipotecarioView(UserViewSet):
     queryset = Usuario.objects.all()
-    serializer_class = UsuarioAgentePrestamosSerializer
+    serializer_class = UsuarioAgenteHipotecarioSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
         return Usuario.objects.filter(
-            perfil_inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+            perfil_inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
         )
 
 
@@ -144,7 +141,7 @@ class PerfilProfesionalServiciosView(UserViewSet):
 
     def get_queryset(self):
         return Usuario.objects.filter(
-            perfil_inmobiliaria__id=self.request.user.perfil_inmobiliaria.id
+            perfil_inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
         )
 
 

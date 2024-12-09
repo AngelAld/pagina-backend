@@ -34,14 +34,14 @@ def enviar_correo_otp(usuario: Usuario):
     print("Correo enviado ################################")
 
 
-class UserRetrieve:
+class UserRetrieve(GenericAPIView):
     def get(self, request, *args, **kwargs):
         instance = request.user
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
 
-class UserCreate:
+class UserCreate(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -52,7 +52,7 @@ class UserCreate:
         serializer.save()
 
 
-class UserUpdate:
+class UserUpdate(GenericAPIView):
     def put(self, request, **kwargs):
         partial = kwargs.pop("partial", False)
         instance = request.user
@@ -75,7 +75,7 @@ class UserUpdate:
 
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
-        return self.update(request, *args, **kwargs)
+        return self.put(request, *args, **kwargs)
 
 
 class UserDelete:

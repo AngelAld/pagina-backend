@@ -86,7 +86,9 @@ class Comentario(models.Model):
 
 
 class Documento(models.Model):
-    evaluacion = models.ForeignKey(EvaluacionCrediticia, on_delete=models.CASCADE)
+    evaluacion = models.ForeignKey(
+        EvaluacionCrediticia, on_delete=models.CASCADE, related_name="documentos"
+    )
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField(
         blank=True,
