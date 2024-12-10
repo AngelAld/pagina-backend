@@ -1,5 +1,8 @@
 from pydoc import doc
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from yaml import serialize
+
+from Planes import serializers
 from .models import (
     EntidadBancaria,
     PerfilPrestatarioPrefab,
@@ -27,6 +30,22 @@ class DocumentoEvaluacionPrefabSerializer(ModelSerializer):
             "nombre",
             "descripcion",
             "etapa",
+        ]
+
+
+class PerfilPrestatarioPrefabListSerializer(ModelSerializer):
+    documentos = SerializerMethodField()
+
+    def get_documentos(self, obj) -> int:
+        return obj.documentos.count()
+
+    class Meta:
+        model = PerfilPrestatarioPrefab
+        fields = [
+            "id",
+            "nombre",
+            "descripcion",
+            "documentos",
         ]
 
 

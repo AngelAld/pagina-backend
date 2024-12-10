@@ -35,6 +35,10 @@ class PerfilPrestatarioPrefab(models.Model):
         Usuario, on_delete=models.CASCADE, related_name="prefabs_perfiles"
     )
     nombre = models.CharField(max_length=255)
+    descripcion = models.TextField(
+        blank=True,
+        null=True,
+    )
     # resto de campos a definir
 
     def __str__(self):
