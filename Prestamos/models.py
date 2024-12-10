@@ -39,7 +39,8 @@ class PerfilPrestatarioPrefab(models.Model):
         blank=True,
         null=True,
     )
-    # resto de campos a definir
+
+    # TODO: resto de campos a definir
 
     def __str__(self):
         return f"{self.dueño} - {self.nombre}"

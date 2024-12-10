@@ -1,8 +1,4 @@
-from pydoc import doc
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from yaml import serialize
-
-from Planes import serializers
 from .models import (
     EntidadBancaria,
     PerfilPrestatarioPrefab,
@@ -50,14 +46,19 @@ class PerfilPrestatarioPrefabListSerializer(ModelSerializer):
 
 
 class PerfilPrestatarioPrefabSerializer(ModelSerializer):
-    documentos = DocumentoEvaluacionPrefabSerializer(many=True)
+    documentos = DocumentoEvaluacionPrefabSerializer(many=True, required=False)
 
     class Meta:
         model = PerfilPrestatarioPrefab
         fields = [
             "id",
+            "nombre",
+            "descripcion",
             "documentos",
         ]
+        extra_kwargs = {
+            "descripcion": {"required": False},
+        }
 
     @atomic
     def create(self, validated_data):
@@ -77,7 +78,12 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
         instance.documentos.all().delete()
         documentos_data = validated_data.pop("documentos", [])
 
-        # TODO: logica del resto de campos de PerfilPrestatarioPrefab
+        instance.nombre = validated_data.get("nombre", instance.nombre)
+        instance.descripcion = validated_data.get("descripcion", instance.descripcion)
+
+        # TODO: resto de campos de PerfilPrestatarioPrefab
+
+        instance.save()
 
         for documento_data in documentos_data:
             DocumentoEvaluacionPrefab.objects.create(

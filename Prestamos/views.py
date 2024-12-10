@@ -1,14 +1,21 @@
 from rest_framework.viewsets import ModelViewSet
-from .models import EntidadBancaria, PerfilPrestatarioPrefab
+from .models import EntidadBancaria, PerfilPrestatarioPrefab, EtapaEvaluacion
 from .serializers import (
     EntidadBancariaSerializer,
     PerfilPrestatarioPrefabListSerializer,
     PerfilPrestatarioPrefabSerializer,
+    EtapaEvalucionSerializer,
 )
 from rest_framework.permissions import AllowAny
-from Usuarios.util import UserViewSet, GenericAPIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+
+
+class EtapaEvaluacionViewSet(ModelViewSet):
+    permission_classes = [AllowAny]
+    queryset = EtapaEvaluacion.objects.all()
+    serializer_class = EtapaEvalucionSerializer
+    http_method_names = ["get"]
 
 
 class EntidadBancariaViewSet(ModelViewSet):
@@ -23,6 +30,16 @@ class PerfilPrestatarioPrefabViewSet(ModelViewSet):
     serializer_class = PerfilPrestatarioPrefabListSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "delete"]
+
+    def get_queryset(self):
+        return super().get_queryset().filter(dueño=self.request.user)
+
+
+class PerfilPrestatarioPrefabDetalleViewSet(ModelViewSet):
+    queryset = PerfilPrestatarioPrefab.objects.all()
+    serializer_class = PerfilPrestatarioPrefabSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
         return super().get_queryset().filter(dueño=self.request.user)
