@@ -670,7 +670,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         print("Estamos logeando 4")
         apellidos = google_user_data.get("family_name")
         print("Estamos logeando 5")
-        id_tipo_usuario = validated_data.pop("id_tipo_usuario", None)
+        id_tipo_usuario = validated_data.pop("tipo_usuario", None)
         print("Estamos logeando 6")
         if id_tipo_usuario is None:
             print("Estamos logeando 7")
