@@ -24,7 +24,7 @@ class TipoUsuario(models.Model):
 class Usuario(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     nombres = models.CharField(max_length=255)
-    apellidos = models.CharField(max_length=255)
+    apellidos = models.CharField(max_length=255, blank=True)
     dni = models.CharField(max_length=8, unique=True, blank=True, null=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
