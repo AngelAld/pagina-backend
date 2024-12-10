@@ -5,7 +5,7 @@ from .views import PlanInmueblesViewSet, PlanPrestamosViewSet, PlanServiciosView
 router = DefaultRouter()
 
 router.register(r"inmuebles", PlanInmueblesViewSet)
-router.register(r"prestamos", PlanPrestamosViewSet)
+router.register(r"creditos-hipotecarios", PlanPrestamosViewSet)
 router.register(r"servicios", PlanServiciosViewSet)
 
 urlpatterns = [

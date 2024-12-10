@@ -42,10 +42,10 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
 
     @atomic
     def create(self, validated_data):
-        usuario = self.context["request"].user
+        dueño = self.context["request"].user
         documentos_data = validated_data.pop("documentos", [])
         perfil_prefab = PerfilPrestatarioPrefab.objects.create(
-            usuario=usuario, **validated_data
+            dueño=dueño, **validated_data
         )
         for documento_data in documentos_data:
             DocumentoEvaluacionPrefab.objects.create(

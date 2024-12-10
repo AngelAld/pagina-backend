@@ -84,7 +84,7 @@ class PerfilClienteView(UserViewSet):
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(id=self.request.user.pk)
+        return super().get_queryset().filter(id=self.request.user.pk)
 
 
 class PerfilParticularInmueblesView(UserViewSet):
@@ -94,7 +94,7 @@ class PerfilParticularInmueblesView(UserViewSet):
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(pk=self.request.user.pk)
+        return super().get_queryset().filter(id=self.request.user.pk)
 
 
 class PerfilInmobiliariaView(UserViewSet):
@@ -104,7 +104,7 @@ class PerfilInmobiliariaView(UserViewSet):
     http_method_names = ["get", "post", "put", "patch", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(pk=self.request.user.pk)
+        return super().get_queryset().filter(id=self.request.user.pk)
 
 
 class PerfilEmpleadoInmobiliariaView(ModelViewSet):
@@ -116,8 +116,12 @@ class PerfilEmpleadoInmobiliariaView(ModelViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend]
 
     def get_queryset(self):
-        return Usuario.objects.filter(
-            perfil_empleado__inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                perfil_empleado__inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
+            )
         )
 
 
@@ -128,8 +132,10 @@ class PerfilAgenteHipotecarioView(UserViewSet):
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(
-            perfil_inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
+        return (
+            super()
+            .get_queryset()
+            .filter(perfil_inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk)
         )
 
 
@@ -140,8 +146,10 @@ class PerfilProfesionalServiciosView(UserViewSet):
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(
-            perfil_inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk
+        return (
+            super()
+            .get_queryset()
+            .filter(perfil_inmobiliaria__pk=self.request.user.perfil_inmobiliaria.pk)
         )
 
 
@@ -154,7 +162,7 @@ class ConfirmarEmailView(GenericAPIView):
         try:
             serializer.is_valid(raise_exception=True)
 
-            codigo = CodigoUnUso.objects.get(codigo=serializer.validated_data["codigo"])
+            codigo = CodigoUnUso.objects.get(codigo=serializer.validated_data["codigo"])  # type: ignore
             usuario = codigo.usuario
             if usuario != request.user:
                 return Response(
@@ -205,8 +213,12 @@ class PerfilVistaView(ModelViewSet):
     http_method_names = ["get"]
 
     def get_queryset(self):
-        return Usuario.objects.filter(
-            Q(perfil_inmobiliaria__isnull=False)
-            | Q(perfil_empleado__isnull=False)
-            | Q(perfil_particular__isnull=False)
+        return (
+            super()
+            .get_queryset()
+            .filter(
+                Q(perfil_inmobiliaria__isnull=False)
+                | Q(perfil_empleado__isnull=False)
+                | Q(perfil_particular__isnull=False)
+            )
         )

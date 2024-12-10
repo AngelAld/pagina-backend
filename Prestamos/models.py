@@ -12,6 +12,9 @@ class EntidadBancaria(models.Model):
     )
     estado = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.nombre
+
 
 class PerfilAgenteHipotecario(models.Model):
     usuario = models.OneToOneField(
@@ -23,12 +26,19 @@ class PerfilAgenteHipotecario(models.Model):
     plan = models.ForeignKey(PlanPrestamos, on_delete=models.PROTECT)
     entidad = models.ForeignKey(EntidadBancaria, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return f"{self.usuario}"
+
 
 class PerfilPrestatarioPrefab(models.Model):
-    usuario = models.OneToOneField(
+    dueño = models.ForeignKey(
         Usuario, on_delete=models.CASCADE, related_name="prefabs_perfiles"
     )
+    nombre = models.CharField(max_length=255)
     # resto de campos a definir
+
+    def __str__(self):
+        return f"{self.dueño} - {self.nombre}"
 
 
 class EtapaEvaluacion(models.Model):
@@ -38,6 +48,9 @@ class EtapaEvaluacion(models.Model):
         null=True,
     )
 
+    def __str__(self):
+        return self.nombre
+
 
 class EstadoEvaluacion(models.Model):
     nombre = models.CharField(max_length=255)
@@ -46,9 +59,14 @@ class EstadoEvaluacion(models.Model):
         null=True,
     )
 
+    def __str__(self):
+        return self.nombre
+
 
 class DocumentoEvaluacionPrefab(models.Model):
-    perfil_prefab = models.ForeignKey(PerfilPrestatarioPrefab, on_delete=models.CASCADE)
+    perfil_prefab = models.ForeignKey(
+        PerfilPrestatarioPrefab, on_delete=models.CASCADE, related_name="documentos"
+    )
     nombre = models.CharField(max_length=255)
     descripcion = models.TextField(
         blank=True,
@@ -56,12 +74,18 @@ class DocumentoEvaluacionPrefab(models.Model):
     )
     etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return self.nombre
+
 
 class PerfilPrestatario(models.Model):
     usuario = models.OneToOneField(
         Usuario, on_delete=models.CASCADE, related_name="perfil_prestatario"
     )
+
     # resto de campos a definir
+    def __str__(self):
+        return f"{self.usuario}"
 
 
 class EvaluacionCrediticia(models.Model):
@@ -76,6 +100,9 @@ class EvaluacionCrediticia(models.Model):
         related_name="evaluaciones",
     )
 
+    def __str__(self):
+        return f"{self.prestatario} - {self.agente}"
+
 
 class Comentario(models.Model):
     evaluacion = models.ForeignKey(EvaluacionCrediticia, on_delete=models.CASCADE)
@@ -83,6 +110,9 @@ class Comentario(models.Model):
     visible = models.BooleanField(default=False)
     fecha = models.DateTimeField(auto_now_add=True)
     etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return f"{self.evaluacion} - {self.fecha}"
 
 
 class Documento(models.Model):
@@ -98,3 +128,6 @@ class Documento(models.Model):
         upload_to="evaluaciones/documentos", null=True, blank=True
     )
     etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.nombre
