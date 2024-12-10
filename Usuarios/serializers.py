@@ -673,7 +673,9 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         tipo_usuario = validated_data.pop("tipo_usuario", None)
         print("Estamos logeando 6")
         if tipo_usuario is None:
+            print("Estamos logeando 7")
             try:
+                print("Estamos logeando 8")
                 usuario = Usuario.objects.get(email=email)
                 return usuario
             except Usuario.DoesNotExist:
