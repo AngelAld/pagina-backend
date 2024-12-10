@@ -670,9 +670,9 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         print("Estamos logeando 4")
         apellidos = google_user_data.get("family_name")
         print("Estamos logeando 5")
-        id_tipo_usuario = validated_data.pop("tipo_usuario", None)
+        tipo_usuario = validated_data.pop("tipo_usuario", None)
         print("Estamos logeando 6")
-        if id_tipo_usuario is None:
+        if tipo_usuario is None:
             print("Estamos logeando 7")
             try:
                 print("Estamos logeando 8")
@@ -689,11 +689,6 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
                 "apellidos": apellidos,
             },
         )
-        tipo_usuario = None
-        try:
-            tipo_usuario = TipoUsuario.objects.get(id=id_tipo_usuario)
-        except TipoUsuario.DoesNotExist:
-            raise ValidationError("Tipo de usuario no válido")
         usuario.tipo_usuario.add(tipo_usuario)
         print("Estamos logeando 8")
         provider = AuthProvider.objects.get(nombre="google")
