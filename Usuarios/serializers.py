@@ -638,6 +638,9 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
+        print("####################")
+        print(attrs)
+        print("Estamos validando")
         credential = attrs.get("credential")
         try:
             google_user_data = id_token.verify_oauth2_token(
@@ -654,20 +657,29 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
+        print("####################")
+        print(validated_data)
+        print("Estamos logeando")
         credential = validated_data.get("credential")
+        print("Estamos logeando 1")
         google_user_data = id_token.verify_oauth2_token(credential, requests.Request())
+        print("Estamos logeando 2")
         email = google_user_data.get("email")
+        print("Estamos logeando 3 ")
         nombres = google_user_data.get("given_name")
+        print("Estamos logeando 4")
         apellidos = google_user_data.get("family_name")
+        print("Estamos logeando 5")
         tipo_usuario = validated_data.pop("tipo_usuario", None)
+        print("Estamos logeando 6")
         if tipo_usuario is None:
             try:
                 usuario = Usuario.objects.get(email=email)
-
                 return usuario
             except Usuario.DoesNotExist:
                 raise ValidationError("Este email no está registrado")
 
+        print("Estamos logeando 7")
         usuario, _ = Usuario.objects.get_or_create(
             email=email,
             defaults={
@@ -675,7 +687,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
                 "apellidos": apellidos,
             },
         )
-
+        print("Estamos logeando 8")
         provider = AuthProvider.objects.get(nombre="google")
         usuario.provider.add(provider)
         usuario.is_verified = True
