@@ -106,7 +106,10 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
             DocumentoEvaluacionPrefab.objects.create(
                 perfil_prefab=perfil_prefab, **documento_data
             )
-        for respuesta in respuestas_data:
+        num_preguntas = PreguntaPerfil.objects.count()
+        for index, respuesta in enumerate(respuestas_data, start=1):
+            if index > num_preguntas:
+                break
             perfil_prefab.respuestas.add(respuesta)
         perfil_prefab.save()
         return perfil_prefab
