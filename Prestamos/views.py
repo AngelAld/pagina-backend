@@ -1,14 +1,27 @@
 from rest_framework.viewsets import ModelViewSet
-from .models import EntidadBancaria, PerfilPrestatarioPrefab, EtapaEvaluacion
+from .models import (
+    EntidadBancaria,
+    PerfilPrestatarioPrefab,
+    EtapaEvaluacion,
+    PreguntaPerfil,
+)
 from .serializers import (
     EntidadBancariaSerializer,
     PerfilPrestatarioPrefabListSerializer,
     PerfilPrestatarioPrefabSerializer,
     EtapaEvalucionSerializer,
+    PreguntaPerfilSerializer,
 )
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+
+
+class PreguntaPerfilViewSet(ModelViewSet):
+    permission_classes = [AllowAny]
+    queryset = PreguntaPerfil.objects.all()
+    serializer_class = PreguntaPerfilSerializer
+    http_method_names = ["get"]
 
 
 class EtapaEvaluacionViewSet(ModelViewSet):

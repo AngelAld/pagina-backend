@@ -1,12 +1,42 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from os import read
+from rest_framework.serializers import (
+    ModelSerializer,
+    SerializerMethodField,
+    PrimaryKeyRelatedField,
+)
 from .models import (
     EntidadBancaria,
     PerfilPrestatarioPrefab,
     EstadoEvaluacion,
     EtapaEvaluacion,
     DocumentoEvaluacionPrefab,
+    PreguntaPerfil,
+    RespuestaPerfil,
 )
 from django.db.transaction import atomic
+
+
+class RespuestaPerfilSerializer(ModelSerializer):
+    class Meta:
+        model = RespuestaPerfil
+        fields = [
+            "id",
+            "nombre",
+            "descripcion",
+        ]
+
+
+class PreguntaPerfilSerializer(ModelSerializer):
+    respuestas = RespuestaPerfilSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PreguntaPerfil
+        fields = [
+            "id",
+            "nombre",
+            "descripcion",
+            "respuestas",
+        ]
 
 
 class EntidadBancariaSerializer(ModelSerializer):
@@ -47,6 +77,9 @@ class PerfilPrestatarioPrefabListSerializer(ModelSerializer):
 
 class PerfilPrestatarioPrefabSerializer(ModelSerializer):
     documentos = DocumentoEvaluacionPrefabSerializer(many=True, required=False)
+    respuestas = PrimaryKeyRelatedField(
+        queryset=RespuestaPerfil.objects.all(), many=True, required=False
+    )
 
     class Meta:
         model = PerfilPrestatarioPrefab
@@ -55,6 +88,7 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
             "nombre",
             "descripcion",
             "documentos",
+            "respuestas",
         ]
         extra_kwargs = {
             "descripcion": {"required": False},
@@ -64,6 +98,7 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
     def create(self, validated_data):
         dueño = self.context["request"].user
         documentos_data = validated_data.pop("documentos", [])
+        respuestas_data = validated_data.pop("respuestas", [])
         perfil_prefab = PerfilPrestatarioPrefab.objects.create(
             dueño=dueño, **validated_data
         )
@@ -71,24 +106,25 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
             DocumentoEvaluacionPrefab.objects.create(
                 perfil_prefab=perfil_prefab, **documento_data
             )
+        for respuesta in respuestas_data:
+            perfil_prefab.respuestas.add(respuesta)
+        perfil_prefab.save()
         return perfil_prefab
 
     @atomic
     def update(self, instance, validated_data):
         instance.documentos.all().delete()
         documentos_data = validated_data.pop("documentos", [])
-
+        respuestas_data = validated_data.pop("respuestas", [])
         instance.nombre = validated_data.get("nombre", instance.nombre)
         instance.descripcion = validated_data.get("descripcion", instance.descripcion)
-
-        # TODO: resto de campos de PerfilPrestatarioPrefab
-
-        instance.save()
-
+        for respuesta in respuestas_data:
+            instance.respuestas.add(respuesta)
         for documento_data in documentos_data:
             DocumentoEvaluacionPrefab.objects.create(
                 perfil_prefab=instance, **documento_data
             )
+        instance.save()
         return instance
 
 

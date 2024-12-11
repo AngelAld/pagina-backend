@@ -1,5 +1,11 @@
 from django.core.management.base import BaseCommand
-from Prestamos.models import EntidadBancaria, EstadoEvaluacion, EtapaEvaluacion
+from Prestamos.models import (
+    EntidadBancaria,
+    EstadoEvaluacion,
+    EtapaEvaluacion,
+    PreguntaPerfil,
+    RespuestaPerfil,
+)
 
 entidades = ["BCP"]
 
@@ -17,6 +23,10 @@ etapas = [
     "Resolución",
 ]
 
+preguntas = ["pregunta1", "pregunta2", "pregunta3"]
+
+respuestas = ["respuesta1", "respuesta2", "respuesta3"]
+
 
 class Command(BaseCommand):
     help = "Genera data basica para el modulo de creditos hipotecarios"
@@ -29,14 +39,24 @@ class Command(BaseCommand):
         self.stdout.write("Creando entidades bancarias")
 
         for entidad in entidades:
-            EntidadBancaria.objects.create(nombre=entidad)
+            EntidadBancaria.objects.get_or_create(nombre=entidad)
 
         self.stdout.write("Creando estados de evaluación")
 
         for estado in estados:
-            EstadoEvaluacion.objects.create(nombre=estado)
+            EstadoEvaluacion.objects.get_or_create(nombre=estado)
 
         self.stdout.write("Creando etapas de evaluación")
 
         for etapa in etapas:
-            EtapaEvaluacion.objects.create(nombre=etapa)
+            EtapaEvaluacion.objects.get_or_create(nombre=etapa)
+
+        for pregunta in preguntas:
+            self.stdout.write(f"Creando {pregunta}")
+            pregunta_obj, _ = PreguntaPerfil.objects.get_or_create(nombre=pregunta)
+
+            for respuesta in respuestas:
+                texto = f"{pregunta} - {respuesta}"
+                RespuestaPerfil.objects.get_or_create(
+                    pregunta=pregunta_obj, nombre=texto
+                )

@@ -1,11 +1,10 @@
 from django.db import models
-
 from Planes.models import PlanPrestamos
 from Usuarios.models import Usuario
 
 
 class EntidadBancaria(models.Model):
-    nombre = models.CharField(max_length=255)
+    nombre = models.CharField(max_length=255, unique=True)
     descripcion = models.TextField(
         blank=True,
         null=True,
@@ -30,6 +29,35 @@ class PerfilAgenteHipotecario(models.Model):
         return f"{self.usuario}"
 
 
+class PreguntaPerfil(models.Model):
+    nombre = models.CharField(max_length=255, unique=True)
+    descripcion = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    def __str__(self):
+        return self.nombre
+
+
+class RespuestaPerfil(models.Model):
+    pregunta = models.ForeignKey(
+        PreguntaPerfil, on_delete=models.CASCADE, related_name="respuestas"
+    )
+    nombre = models.CharField(max_length=255)
+
+    descripcion = models.TextField(
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        unique_together = ("pregunta", "nombre")
+
+    def __str__(self):
+        return f"{self.pregunta}: {self.nombre}"
+
+
 class PerfilPrestatarioPrefab(models.Model):
     dueño = models.ForeignKey(
         Usuario, on_delete=models.CASCADE, related_name="prefabs_perfiles"
@@ -39,15 +67,14 @@ class PerfilPrestatarioPrefab(models.Model):
         blank=True,
         null=True,
     )
-
-    # TODO: resto de campos a definir
+    respuestas = models.ManyToManyField(RespuestaPerfil)
 
     def __str__(self):
         return f"{self.dueño} - {self.nombre}"
 
 
 class EtapaEvaluacion(models.Model):
-    nombre = models.CharField(max_length=255)
+    nombre = models.CharField(max_length=255, unique=True)
     descripcion = models.TextField(
         blank=True,
         null=True,
@@ -58,7 +85,7 @@ class EtapaEvaluacion(models.Model):
 
 
 class EstadoEvaluacion(models.Model):
-    nombre = models.CharField(max_length=255)
+    nombre = models.CharField(max_length=255, unique=True)
     descripcion = models.TextField(
         blank=True,
         null=True,
@@ -88,7 +115,8 @@ class PerfilPrestatario(models.Model):
         Usuario, on_delete=models.CASCADE, related_name="perfil_prestatario"
     )
 
-    # resto de campos a definir
+    respuestas = models.ManyToManyField(RespuestaPerfil)
+
     def __str__(self):
         return f"{self.usuario}"
 
