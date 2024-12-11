@@ -118,12 +118,21 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
         respuestas_data = validated_data.pop("respuestas", [])
         instance.nombre = validated_data.get("nombre", instance.nombre)
         instance.descripcion = validated_data.get("descripcion", instance.descripcion)
-        for respuesta in respuestas_data:
+        instance.respuestas.clear()
+
+        num_preguntas = PreguntaPerfil.objects.count()
+        for index, respuesta in enumerate(respuestas_data, start=1):
+            if index > num_preguntas:
+                break
             instance.respuestas.add(respuesta)
+
         for documento_data in documentos_data:
             DocumentoEvaluacionPrefab.objects.create(
                 perfil_prefab=instance, **documento_data
             )
+        print("###########################")
+        print(instance.respuestas.all())
+        print("###########################")
         instance.save()
         return instance
 
