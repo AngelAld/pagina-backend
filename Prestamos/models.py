@@ -1,4 +1,5 @@
 from django.db import models
+from Inmuebles.models import Inmueble
 from Planes.models import PlanPrestamos
 from Usuarios.models import Usuario
 
@@ -107,14 +108,20 @@ class DocumentoEvaluacionPrefab(models.Model):
     etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
 
     def __str__(self):
-        return self.nombre
+        return f"{self.nombre}"
 
 
 class PerfilPrestatario(models.Model):
     usuario = models.OneToOneField(
         Usuario, on_delete=models.CASCADE, related_name="perfil_prestatario"
     )
-
+    inmueble = models.ForeignKey(
+        Inmueble,
+        on_delete=models.SET_NULL,
+        related_name="prestatarios",
+        null=True,
+        blank=True,
+    )
     respuestas = models.ManyToManyField(RespuestaPerfil)
 
     def __str__(self):

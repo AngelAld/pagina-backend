@@ -17,6 +17,7 @@ from .views import (
     PerfilVistaView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
+from Prestamos.views import PerfilPrestatarioViewSet
 
 auth = DefaultRouter()
 tipos = DefaultRouter()
@@ -47,6 +48,7 @@ perfiles = [
         PerfilProfesionalServiciosView.as_view(),
         name="perfil profesional servicios",
     ),
+    path("prestatario/", PerfilPrestatarioViewSet.as_view(), name="perfil prestatario"),
 ]
 
 

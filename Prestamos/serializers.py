@@ -1,9 +1,9 @@
+from importlib.metadata import requires
 from os import read
-from rest_framework.serializers import (
-    ModelSerializer,
-    SerializerMethodField,
-    PrimaryKeyRelatedField,
-)
+from pyexpat import model
+
+from rest_framework import serializers
+from Usuarios.models import Usuario
 from .models import (
     EntidadBancaria,
     PerfilPrestatarioPrefab,
@@ -12,11 +12,12 @@ from .models import (
     DocumentoEvaluacionPrefab,
     PreguntaPerfil,
     RespuestaPerfil,
+    PerfilPrestatario,
 )
 from django.db.transaction import atomic
 
 
-class RespuestaPerfilSerializer(ModelSerializer):
+class RespuestaPerfilSerializer(serializers.ModelSerializer):
     class Meta:
         model = RespuestaPerfil
         fields = [
@@ -26,7 +27,7 @@ class RespuestaPerfilSerializer(ModelSerializer):
         ]
 
 
-class PreguntaPerfilSerializer(ModelSerializer):
+class PreguntaPerfilSerializer(serializers.ModelSerializer):
     respuestas = RespuestaPerfilSerializer(many=True, read_only=True)
 
     class Meta:
@@ -39,7 +40,7 @@ class PreguntaPerfilSerializer(ModelSerializer):
         ]
 
 
-class EntidadBancariaSerializer(ModelSerializer):
+class EntidadBancariaSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntidadBancaria
         fields = [
@@ -48,7 +49,7 @@ class EntidadBancariaSerializer(ModelSerializer):
         ]
 
 
-class DocumentoEvaluacionPrefabSerializer(ModelSerializer):
+class DocumentoEvaluacionPrefabSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocumentoEvaluacionPrefab
         fields = [
@@ -59,8 +60,8 @@ class DocumentoEvaluacionPrefabSerializer(ModelSerializer):
         ]
 
 
-class PerfilPrestatarioPrefabListSerializer(ModelSerializer):
-    documentos = SerializerMethodField()
+class PerfilPrestatarioPrefabListSerializer(serializers.ModelSerializer):
+    documentos = serializers.SerializerMethodField()
 
     def get_documentos(self, obj) -> int:
         return obj.documentos.count()
@@ -75,9 +76,9 @@ class PerfilPrestatarioPrefabListSerializer(ModelSerializer):
         ]
 
 
-class PerfilPrestatarioPrefabSerializer(ModelSerializer):
+class PerfilPrestatarioPrefabSerializer(serializers.ModelSerializer):
     documentos = DocumentoEvaluacionPrefabSerializer(many=True, required=False)
-    respuestas = PrimaryKeyRelatedField(
+    respuestas = serializers.PrimaryKeyRelatedField(
         queryset=RespuestaPerfil.objects.all(), many=True, required=False
     )
 
@@ -140,7 +141,7 @@ class PerfilPrestatarioPrefabSerializer(ModelSerializer):
         return instance
 
 
-class EtapaEvalucionSerializer(ModelSerializer):
+class EtapaEvalucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = EtapaEvaluacion
         fields = [
@@ -150,7 +151,7 @@ class EtapaEvalucionSerializer(ModelSerializer):
         ]
 
 
-class EstadoEvaluacionSerializer(ModelSerializer):
+class EstadoEvaluacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstadoEvaluacion
         fields = [
@@ -158,3 +159,72 @@ class EstadoEvaluacionSerializer(ModelSerializer):
             "nombre",
             "descripcion",
         ]
+
+
+class PerfilPrestatarioSerializer(serializers.ModelSerializer):
+    respuestas = serializers.PrimaryKeyRelatedField(
+        queryset=RespuestaPerfil.objects.all(), many=True, required=True
+    )
+
+    class Meta:
+        model = PerfilPrestatario
+        fields = [
+            "id",
+            "inmueble",
+            "respuestas",
+        ]
+        extra_kwargs = {
+            "inmueble": {"required": False},
+        }
+
+
+class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
+    perfil_prestatario = PerfilPrestatarioSerializer(required=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "perfil_prestatario",
+        ]
+
+    @atomic
+    def create(self, validated_data):
+
+        usuario = self.context["request"].user
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise serializers.ValidationError("No se ha iniciado sesión")
+
+        if hasattr(usuario, "perfil_prestatario"):
+            raise serializers.ValidationError(
+                "El usuario ya tiene un perfil prestario asociado"
+            )
+        print("#######################")
+        print(validated_data)
+        print("#######################")
+        perfil_data = validated_data.pop("perfil_prestatario")
+        print("#######################")
+        print(perfil_data)
+        print("#######################")
+        respuestas_data = perfil_data.pop("respuestas", [])
+        perfil_prestatario = PerfilPrestatario.objects.create(usuario=usuario)
+        num_preguntas = PreguntaPerfil.objects.count()
+        for index, respuesta in enumerate(respuestas_data, start=1):
+            if index > num_preguntas:
+                break
+            perfil_prestatario.respuestas.add(respuesta)
+        perfil_prestatario.save()
+        return usuario
+
+    @atomic
+    def update(self, instance, validated_data):
+        instance.respuestas.clear()
+        perfil_data = validated_data.pop("perfil_prestatario")
+        respuestas_data = perfil_data.pop("respuestas", [])
+        num_preguntas = PreguntaPerfil.objects.count()
+        for index, respuesta in enumerate(respuestas_data, start=1):
+            if index > num_preguntas:
+                break
+            instance.respuestas.add(respuesta)
+        instance.save()
+        return instance
