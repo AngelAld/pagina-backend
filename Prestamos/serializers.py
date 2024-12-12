@@ -303,3 +303,5 @@ class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
             )
 
         prestatario = instance.perfil_prestatario
+
+        # if prestatario.evaluaciones.filter()
