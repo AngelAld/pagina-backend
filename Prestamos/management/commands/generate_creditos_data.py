@@ -15,6 +15,7 @@ estados = [
     "Observado",
     "Aprobado",
     "Rechazado",
+    "Cancelado",
 ]
 
 etapas = [

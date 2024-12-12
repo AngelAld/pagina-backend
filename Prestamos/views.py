@@ -75,7 +75,7 @@ class NuevosClientesDetalleModelViewSet(ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = NuevoClienteDetalleSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get"]
+    http_method_names = ["get", "put"]
 
     def get_queryset(self):
         return super().get_queryset().filter(perfil_prestatario__isnull=False)

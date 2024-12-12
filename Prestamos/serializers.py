@@ -276,3 +276,30 @@ class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
             "dni",
             "perfil_prestatario",
         ]
+        extra_kwargs = {
+            "id": {"read_only": False},
+            "email": {"read_only": True},
+            "nombres": {"read_only": True},
+            "apellidos": {"read_only": True},
+            "dni": {"read_only": True},
+        }
+
+    @atomic
+    def update(self, instance, validated_data):
+        usuario = self.context["request"].user
+
+        # TODO: refactorizar esto en un permiso
+
+        if not hasattr(usuario, "perfil_agente_hipotecario"):
+            raise serializers.ValidationError(
+                "No tienes permisos para realizar esta acción"
+            )
+
+        #
+
+        if not hasattr(instance, "perfil_prestatario"):
+            raise serializers.ValidationError(
+                "El cliente no tiene un perfil de prestatario"
+            )
+
+        prestatario = instance.perfil_prestatario
