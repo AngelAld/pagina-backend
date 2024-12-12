@@ -1,20 +1,19 @@
 from rest_framework.viewsets import ModelViewSet
-
 from Usuarios.models import Usuario
-from Usuarios.util import UserViewSet
 from .models import (
     EntidadBancaria,
     PerfilPrestatarioPrefab,
     EtapaEvaluacion,
     PreguntaPerfil,
-    PerfilPrestatario,
 )
 from .serializers import (
     EntidadBancariaSerializer,
+    NuevoClienteDetalleSerializer,
     PerfilPrestatarioPrefabListSerializer,
     PerfilPrestatarioPrefabSerializer,
     EtapaEvalucionSerializer,
     PreguntaPerfilSerializer,
+    NuevosClientesListSerializer,
 )
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
@@ -60,3 +59,23 @@ class PerfilPrestatarioPrefabDetalleViewSet(ModelViewSet):
 
     def get_queryset(self):
         return super().get_queryset().filter(dueño=self.request.user)
+
+
+class NuevosClientesListModelViewSet(ModelViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = NuevosClientesListSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        return super().get_queryset().filter(perfil_prestatario__isnull=False)
+
+
+class NuevosClientesDetalleModelViewSet(ModelViewSet):
+    queryset = Usuario.objects.all()
+    serializer_class = NuevoClienteDetalleSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        return super().get_queryset().filter(perfil_prestatario__isnull=False)

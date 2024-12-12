@@ -1,7 +1,13 @@
+from pyexpat import model
 from rest_framework import serializers
+from Inmuebles.serializers import InmuebleListSerializer
+from Usuarios.models import Usuario
+
 
 from .models import (
     EntidadBancaria,
+    EvaluacionCrediticia,
+    PerfilPrestatario,
     PerfilPrestatarioPrefab,
     EstadoEvaluacion,
     EtapaEvaluacion,
@@ -153,4 +159,120 @@ class EstadoEvaluacionSerializer(serializers.ModelSerializer):
             "id",
             "nombre",
             "descripcion",
+        ]
+
+
+class RespuestaListSerializer(serializers.ModelSerializer):
+    pregunta = serializers.StringRelatedField()
+    # descripcion_pregunta = serializers.StringRelatedField(source="pregunta.descripcion")
+    respuesta = serializers.StringRelatedField(source="nombre")
+
+    class Meta:
+        model = RespuestaPerfil
+        fields = [
+            "pregunta",
+            # "descripcion_pregunta",
+            "respuesta",
+            # "descripcion",
+        ]
+
+
+class RespuestaDetalleSerializer(serializers.ModelSerializer):
+    pregunta = serializers.StringRelatedField()
+    descripcion_pregunta = serializers.StringRelatedField(source="pregunta.descripcion")
+    respuesta = serializers.StringRelatedField(source="nombre")
+
+    class Meta:
+        model = RespuestaPerfil
+        fields = [
+            "pregunta",
+            "descripcion_pregunta",
+            "respuesta",
+            "descripcion",
+        ]
+
+
+class EvaluacionListSerializer(serializers.ModelSerializer):
+    entidad = serializers.StringRelatedField(source="agente.entidad")
+
+    class Meta:
+        model = EvaluacionCrediticia
+        fields = [
+            "entidad",
+        ]
+
+
+class EvaluacionDetalleSerializer(serializers.ModelSerializer):
+    entidad = serializers.StringRelatedField(source="agente.entidad")
+    estado = serializers.StringRelatedField(source="estado.nombre")
+    etapa = serializers.StringRelatedField(source="etapa.nombre")
+
+    class Meta:
+        model = EvaluacionCrediticia
+        fields = [
+            "entidad",
+            "estado",
+            "etapa",
+        ]
+
+
+class PerfilPrestatarioListSerializer(serializers.ModelSerializer):
+    respuestas = RespuestaListSerializer(
+        many=True,
+        read_only=True,
+    )
+    inmueble = serializers.StringRelatedField(source="inmueble.slug")
+    evaluaciones = EvaluacionListSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = PerfilPrestatario
+        fields = ["inmueble", "respuestas", "evaluaciones"]
+
+
+class PerfilPrestatarioDetalleSerializer(serializers.ModelSerializer):
+    respuestas = RespuestaDetalleSerializer(
+        many=True,
+        read_only=True,
+    )
+    inmueble = InmuebleListSerializer()
+    evaluaciones = EvaluacionDetalleSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = PerfilPrestatario
+        fields = ["inmueble", "respuestas", "evaluaciones"]
+
+
+class NuevosClientesListSerializer(serializers.ModelSerializer):
+    perfil_prestatario = PerfilPrestatarioListSerializer(read_only=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "perfil_prestatario",
+        ]
+
+
+class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
+    perfil_prestatario = PerfilPrestatarioDetalleSerializer(read_only=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "perfil_prestatario",
         ]

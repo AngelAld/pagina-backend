@@ -140,6 +140,9 @@ class EvaluacionCrediticia(models.Model):
         related_name="evaluaciones",
     )
 
+    estado = models.ForeignKey(EstadoEvaluacion, on_delete=models.PROTECT)
+    etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
+
     def __str__(self):
         return f"{self.prestatario} - {self.agente}"
 

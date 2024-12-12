@@ -5,6 +5,8 @@ from .views import (
     PerfilPrestatarioPrefabDetalleViewSet,
     EtapaEvaluacionViewSet,
     PreguntaPerfilViewSet,
+    NuevosClientesListModelViewSet,
+    NuevosClientesDetalleModelViewSet,
 )
 from django.urls import path, include
 
@@ -14,6 +16,12 @@ router.register(r"etapas-evaluacion", EtapaEvaluacionViewSet)
 router.register(r"entidades-bancarias", EntidadBancariaViewSet)
 router.register(r"prefabs", PerfilPrestatarioPrefabViewSet, basename="prefabs-lista")
 router.register(r"preguntas", PreguntaPerfilViewSet)
+router.register(r"nuevos-clientes", NuevosClientesListModelViewSet)
+router.register(
+    r"detalle-nuevos-clientes",
+    NuevosClientesDetalleModelViewSet,
+    basename="nuevos-clientes-detalle",
+)
 
 router.register(
     r"prefabs-detalle",
