@@ -189,23 +189,15 @@ class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
 
     @atomic
     def create(self, validated_data):
-
         usuario = self.context["request"].user
         request = self.context.get("request")
         if request is None or not hasattr(request, "user"):
             raise serializers.ValidationError("No se ha iniciado sesión")
-
         if hasattr(usuario, "perfil_prestatario"):
             raise serializers.ValidationError(
                 "El usuario ya tiene un perfil prestario asociado"
             )
-        print("#######################")
-        print(validated_data)
-        print("#######################")
         perfil_data = validated_data.pop("perfil_prestatario")
-        print("#######################")
-        print(perfil_data)
-        print("#######################")
         respuestas_data = perfil_data.pop("respuestas", [])
         perfil_prestatario = PerfilPrestatario.objects.create(usuario=usuario)
         num_preguntas = PreguntaPerfil.objects.count()
@@ -218,13 +210,17 @@ class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
 
     @atomic
     def update(self, instance, validated_data):
-        instance.respuestas.clear()
-        perfil_data = validated_data.pop("perfil_prestatario")
+        perfil = instance.perfil_prestatario
+        perfil_data = validated_data["perfil_prestatario"]
         respuestas_data = perfil_data.pop("respuestas", [])
+        perfil.respuestas.clear()
         num_preguntas = PreguntaPerfil.objects.count()
         for index, respuesta in enumerate(respuestas_data, start=1):
             if index > num_preguntas:
                 break
-            instance.respuestas.add(respuesta)
-        instance.save()
+            perfil.respuestas.add(respuesta)
+        inmueble = perfil_data.get("inmueble", None)
+        if inmueble is not None:
+            perfil.inmueble = inmueble
+        perfil.save()
         return instance
