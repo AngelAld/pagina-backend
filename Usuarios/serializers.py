@@ -21,7 +21,12 @@ from django.contrib.auth import authenticate
 from Planes.models import PlanInmuebles, PlanPrestamos
 from drf_extra_fields.fields import Base64ImageField
 
-from Prestamos.models import PerfilAgenteHipotecario
+from Prestamos.models import (
+    PerfilAgenteHipotecario,
+    PerfilPrestatario,
+    PreguntaPerfil,
+    RespuestaPerfil,
+)
 
 
 class OnlyMessageSerializer(serializers.Serializer):
@@ -589,6 +594,88 @@ class UsuarioProfesionalServiciosSerializer(serializers.ModelSerializer):
         return usuario
 
 
+class PerfilPrestatarioSerializer(serializers.ModelSerializer):
+    respuestas = serializers.PrimaryKeyRelatedField(
+        queryset=RespuestaPerfil.objects.all(), many=True, required=True
+    )
+
+    class Meta:
+        model = PerfilPrestatario
+        fields = [
+            "id",
+            "inmueble",
+            "respuestas",
+        ]
+        extra_kwargs = {
+            "inmueble": {"required": False},
+        }
+
+
+class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
+    tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
+    tokens = TokenSerializer(read_only=True)
+    perfil_prestatario = PerfilPrestatarioSerializer(required=True)
+    perfil_cliente = PerfilClienteSerializer(required=False, allow_null=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "is_verified",
+            "tipo_usuario",
+            "perfil_cliente",
+            "perfil_prestatario",
+            "tokens",
+        ]
+        extra_kwargs = {
+            "email": {"read_only": True},
+            "nombres": {"read_only": True},
+            "apellidos": {"read_only": True},
+            "is_verified": {"read_only": True},
+        }
+
+    @atomic
+    def create(self, validated_data):
+        usuario = self.context["request"].user
+        request = self.context.get("request")
+        if request is None or not hasattr(request, "user"):
+            raise serializers.ValidationError("No se ha iniciado sesión")
+        if hasattr(usuario, "perfil_prestatario"):
+            raise serializers.ValidationError(
+                "El usuario ya tiene un perfil prestario asociado"
+            )
+        perfil_data = validated_data.pop("perfil_prestatario")
+        respuestas_data = perfil_data.pop("respuestas", [])
+        perfil_prestatario = PerfilPrestatario.objects.create(usuario=usuario)
+        num_preguntas = PreguntaPerfil.objects.count()
+        for index, respuesta in enumerate(respuestas_data, start=1):
+            if index > num_preguntas:
+                break
+            perfil_prestatario.respuestas.add(respuesta)
+        perfil_prestatario.save()
+        return usuario
+
+    @atomic
+    def update(self, instance, validated_data):
+        perfil = instance.perfil_prestatario
+        perfil_data = validated_data["perfil_prestatario"]
+        respuestas_data = perfil_data.pop("respuestas", [])
+        perfil.respuestas.clear()
+        num_preguntas = PreguntaPerfil.objects.count()
+        for index, respuesta in enumerate(respuestas_data, start=1):
+            if index > num_preguntas:
+                break
+            perfil.respuestas.add(respuesta)
+        inmueble = perfil_data.get("inmueble", None)
+        if inmueble is not None:
+            perfil.inmueble = inmueble
+        perfil.save()
+        return instance
+
+
 class GoogleAuthSerializer(serializers.ModelSerializer):
     credential = serializers.CharField(write_only=True)
     tipo_usuario = TipoUsuarioSerializer(many=True, read_only=True)
@@ -609,6 +696,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
     perfil_profesional = PerfilProfesionalServiciosSerializer(
         required=False, allow_null=True
     )
+    perfil_prestatario = PerfilPrestatarioSerializer(required=False, allow_null=True)
     tokens = TokenSerializer(read_only=True)
 
     class Meta:
@@ -627,6 +715,7 @@ class GoogleAuthSerializer(serializers.ModelSerializer):
             "perfil_inmobiliaria",
             "perfil_agente_hipotecario",
             "perfil_profesional",
+            "perfil_prestatario",
             "tokens",
         ]
         extra_kwargs = {
@@ -716,6 +805,7 @@ class LoginEmailSerializer(serializers.ModelSerializer):
     perfil_empleado = PerfilEmpleadoInmobiliariaSerializer(
         required=False, allow_null=True
     )
+    perfil_prestatario = PerfilPrestatarioSerializer(required=False, allow_null=True)
 
     class Meta:
         model = Usuario
@@ -733,6 +823,7 @@ class LoginEmailSerializer(serializers.ModelSerializer):
             "perfil_agente_hipotecario",
             "perfil_profesional",
             "perfil_empleado",
+            "perfil_prestatario",
             "tokens",
         ]
         extra_kwargs = {

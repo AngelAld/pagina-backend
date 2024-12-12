@@ -1,9 +1,5 @@
-from importlib.metadata import requires
-from os import read
-from pyexpat import model
-
 from rest_framework import serializers
-from Usuarios.models import Usuario
+
 from .models import (
     EntidadBancaria,
     PerfilPrestatarioPrefab,
@@ -12,7 +8,6 @@ from .models import (
     DocumentoEvaluacionPrefab,
     PreguntaPerfil,
     RespuestaPerfil,
-    PerfilPrestatario,
 )
 from django.db.transaction import atomic
 
@@ -159,68 +154,3 @@ class EstadoEvaluacionSerializer(serializers.ModelSerializer):
             "nombre",
             "descripcion",
         ]
-
-
-class PerfilPrestatarioSerializer(serializers.ModelSerializer):
-    respuestas = serializers.PrimaryKeyRelatedField(
-        queryset=RespuestaPerfil.objects.all(), many=True, required=True
-    )
-
-    class Meta:
-        model = PerfilPrestatario
-        fields = [
-            "id",
-            "inmueble",
-            "respuestas",
-        ]
-        extra_kwargs = {
-            "inmueble": {"required": False},
-        }
-
-
-class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
-    perfil_prestatario = PerfilPrestatarioSerializer(required=True)
-
-    class Meta:
-        model = Usuario
-        fields = [
-            "perfil_prestatario",
-        ]
-
-    @atomic
-    def create(self, validated_data):
-        usuario = self.context["request"].user
-        request = self.context.get("request")
-        if request is None or not hasattr(request, "user"):
-            raise serializers.ValidationError("No se ha iniciado sesión")
-        if hasattr(usuario, "perfil_prestatario"):
-            raise serializers.ValidationError(
-                "El usuario ya tiene un perfil prestario asociado"
-            )
-        perfil_data = validated_data.pop("perfil_prestatario")
-        respuestas_data = perfil_data.pop("respuestas", [])
-        perfil_prestatario = PerfilPrestatario.objects.create(usuario=usuario)
-        num_preguntas = PreguntaPerfil.objects.count()
-        for index, respuesta in enumerate(respuestas_data, start=1):
-            if index > num_preguntas:
-                break
-            perfil_prestatario.respuestas.add(respuesta)
-        perfil_prestatario.save()
-        return usuario
-
-    @atomic
-    def update(self, instance, validated_data):
-        perfil = instance.perfil_prestatario
-        perfil_data = validated_data["perfil_prestatario"]
-        respuestas_data = perfil_data.pop("respuestas", [])
-        perfil.respuestas.clear()
-        num_preguntas = PreguntaPerfil.objects.count()
-        for index, respuesta in enumerate(respuestas_data, start=1):
-            if index > num_preguntas:
-                break
-            perfil.respuestas.add(respuesta)
-        inmueble = perfil_data.get("inmueble", None)
-        if inmueble is not None:
-            perfil.inmueble = inmueble
-        perfil.save()
-        return instance
