@@ -2,12 +2,15 @@ from rest_framework.viewsets import ModelViewSet
 from Usuarios.models import Usuario
 from .models import (
     EntidadBancaria,
+    EvaluacionCrediticia,
     PerfilPrestatarioPrefab,
     EtapaEvaluacion,
     PreguntaPerfil,
 )
 from .serializers import (
     EntidadBancariaSerializer,
+    EvaluacionCrediticiaListSerializer,
+    EvaluacionListSerializer,
     NuevoClienteDetalleSerializer,
     PerfilPrestatarioPrefabListSerializer,
     PerfilPrestatarioPrefabSerializer,
@@ -79,3 +82,19 @@ class NuevosClientesDetalleModelViewSet(ModelViewSet):
 
     def get_queryset(self):
         return super().get_queryset().filter(perfil_prestatario__isnull=False)
+
+
+class EvaluacionCrediticiaListViewSet(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.all()
+    serializer_class = EvaluacionCrediticiaListSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "delete"]
+
+    def get_queryset(self):
+        if not hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return super().get_queryset().none()
+        return (
+            super()
+            .get_queryset()
+            .filter(agente=self.request.user.perfil_agente_hipotecario)
+        )

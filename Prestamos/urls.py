@@ -7,6 +7,7 @@ from .views import (
     PreguntaPerfilViewSet,
     NuevosClientesListModelViewSet,
     NuevosClientesDetalleModelViewSet,
+    EvaluacionCrediticiaListViewSet,
 )
 from django.urls import path, include
 
@@ -21,6 +22,11 @@ router.register(
     r"detalle-nuevos-clientes",
     NuevosClientesDetalleModelViewSet,
     basename="nuevos-clientes-detalle",
+)
+router.register(
+    r"evaluaciones-crediticias",
+    EvaluacionCrediticiaListViewSet,
+    basename="evaluaciones-crediticias",
 )
 
 router.register(

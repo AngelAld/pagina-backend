@@ -1,21 +1,21 @@
-from pyexpat import model
+from django.db.transaction import atomic
 from rest_framework import serializers
+
 from Inmuebles.serializers import InmuebleListSerializer
 from Usuarios.models import Usuario
 
-
 from .models import (
+    Documento,
+    DocumentoEvaluacionPrefab,
     EntidadBancaria,
+    EstadoEvaluacion,
+    EtapaEvaluacion,
     EvaluacionCrediticia,
     PerfilPrestatario,
     PerfilPrestatarioPrefab,
-    EstadoEvaluacion,
-    EtapaEvaluacion,
-    DocumentoEvaluacionPrefab,
     PreguntaPerfil,
     RespuestaPerfil,
 )
-from django.db.transaction import atomic
 
 
 class RespuestaPerfilSerializer(serializers.ModelSerializer):
@@ -264,6 +264,7 @@ class NuevosClientesListSerializer(serializers.ModelSerializer):
 
 
 class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
+
     perfil_prestatario = PerfilPrestatarioDetalleSerializer(read_only=True)
 
     class Meta:
@@ -285,8 +286,8 @@ class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
         }
 
     @atomic
-    def update(self, instance, validated_data):
-        usuario = self.context["request"].user
+    def update(self, instance: Usuario, validated_data):
+        usuario: Usuario = self.context["request"].user
 
         # TODO: refactorizar esto en un permiso
 
@@ -302,6 +303,51 @@ class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
                 "El cliente no tiene un perfil de prestatario"
             )
 
-        prestatario = instance.perfil_prestatario
+        prestatario: PerfilPrestatario = instance.perfil_prestatario
 
-        # if prestatario.evaluaciones.filter()
+        entidad: EntidadBancaria = usuario.perfil_agente_hipotecario.entidad
+
+        if prestatario.evaluaciones.filter(
+            agente__entidad=entidad,
+        ).exists():
+            raise serializers.ValidationError(
+                "El cliente ya está siendo evaluado por tu entidad"
+            )
+
+        evaluacion = EvaluacionCrediticia.objects.create(
+            prestatario=prestatario,
+            agente=usuario.perfil_agente_hipotecario,
+            estado=EstadoEvaluacion.objects.get(nombre="En solicitud"),
+            etapa=EtapaEvaluacion.objects.get(nombre="Solicitud"),
+        )
+
+        prefabs = PerfilPrestatarioPrefab.objects.filter(dueño=usuario)
+
+        for prefab in prefabs:
+            if not self._respuestas_match(
+                prefab.respuestas.all(), prestatario.respuestas.all()
+            ):
+                continue
+            self._create_documentos_from_prefab(prefab, evaluacion)
+
+        return instance
+
+    def _respuestas_match(self, respuestas_prefab, prestatario_respuestas):
+        if respuestas_prefab.count() != prestatario_respuestas.count():
+            return False
+        return not respuestas_prefab.difference(prestatario_respuestas)
+
+    def _create_documentos_from_prefab(self, prefab, evaluacion):
+        for documento in prefab.documentos.all():
+            Documento.objects.create(
+                evaluacion=evaluacion,
+                nombre=documento.nombre,
+                descripcion=documento.descripcion,
+                etapa=documento.etapa,
+            )
+
+
+class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvaluacionCrediticia
+        fields = "__all__"
