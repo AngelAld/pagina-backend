@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
+from Inmuebles.models import Inmueble
 from Usuarios.util import enviar_correo_otp
 from .models import (
     AuthProvider,
@@ -598,6 +599,12 @@ class PerfilPrestatarioSerializer(serializers.ModelSerializer):
     respuestas = serializers.PrimaryKeyRelatedField(
         queryset=RespuestaPerfil.objects.all(), many=True, required=True
     )
+    inmueble = serializers.SlugRelatedField(
+        queryset=Inmueble.objects.filter(estado__nombre="Publicado"),
+        slug_field="slug",
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = PerfilPrestatario
@@ -606,9 +613,6 @@ class PerfilPrestatarioSerializer(serializers.ModelSerializer):
             "inmueble",
             "respuestas",
         ]
-        extra_kwargs = {
-            "inmueble": {"required": False},
-        }
 
 
 class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
@@ -655,6 +659,10 @@ class PerfilPrestatarioUserSerializer(serializers.ModelSerializer):
             if index > num_preguntas:
                 break
             perfil_prestatario.respuestas.add(respuesta)
+
+        inmueble = perfil_data.get("inmueble", None)
+        if inmueble is not None:
+            perfil_prestatario.inmueble = inmueble
         perfil_prestatario.save()
         return usuario
 
