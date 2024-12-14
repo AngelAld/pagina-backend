@@ -1,6 +1,8 @@
 from rest_framework.viewsets import ModelViewSet
+from Prestamos.permisions import IsAgenteOrPrestatario
 from Usuarios.models import Usuario
 from .models import (
+    Documento,
     EntidadBancaria,
     EvaluacionCrediticia,
     PerfilPrestatarioPrefab,
@@ -102,8 +104,32 @@ class EvaluacionCrediticiaListViewSet(ModelViewSet):
         )
 
 
+from django.db.models import Prefetch
+
+
 class EvaluacionSolicitudView(ModelViewSet):
-    queryset = EvaluacionCrediticia.objects.all()
+    queryset = EvaluacionCrediticia.objects.prefetch_related(
+        Prefetch(
+            "documentos", queryset=Documento.objects.filter(etapa__nombre="Solicitud")
+        )
+    )
+
     serializer_class = EvaluacionSolicitudSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get"]
+    http_method_names = ["get", "put"]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(agente=self.request.user.perfil_agente_hipotecario)
+            )
+        elif hasattr(self.request.user, "perfil_prestatario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(prestatario=self.request.user.perfil_prestatario)
+            )
+        else:
+            return super().get_queryset().none()

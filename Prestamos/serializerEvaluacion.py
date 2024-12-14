@@ -1,6 +1,8 @@
+from os import write
+from attr import has
 from django.http import QueryDict
 from rest_framework import serializers
-
+from django.db.transaction import atomic
 from Usuarios.models import Usuario
 from .models import (
     EvaluacionCrediticia,
@@ -39,17 +41,14 @@ class PrestatarioDatosSerializer(serializers.ModelSerializer):
 
 
 class DocumentoSerializer(serializers.ModelSerializer):
-    etapa = serializers.StringRelatedField(source="etapa.nombre")
+    nuevo = serializers.BooleanField(write_only=True, default=False)
 
     class Meta:
         model = Documento
-        fields = [
-            "id",
-            "nombre",
-            "descripcion",
-            "archivo",
-            "etapa",
-        ]
+        fields = ["id", "nombre", "descripcion", "archivo", "nuevo"]
+        extra_kwargs = {
+            "id": {"read_only": False},
+        }
 
 
 class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
@@ -61,13 +60,16 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
         source="prestatario.usuario", read_only=True
     )
 
-    documentos = serializers.SerializerMethodField(
-        method_name="get_documentos",
+    documentos = DocumentoSerializer(
+        read_only=False,
+        many=True,
     )
 
-    def get_documentos(self, obj) -> DocumentoSerializer:
-        documentos = Documento.objects.filter(etapa__nombre="Solicitud")
-        return DocumentoSerializer(documentos, many=True).data
+    fecha_inicio = serializers.DateTimeField(format="%Y-%m-%d", required=False)
+    fecha_fin_estimada = serializers.DateTimeField(format="%Y-%m-%d", required=False)
+    fecha_fin_real = serializers.DateTimeField(
+        format="%Y-%m-%d", required=False, allow_null=True
+    )
 
     class Meta:
         model = EvaluacionCrediticia
@@ -87,3 +89,59 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
             "estado": {"read_only": True},
             "etapa": {"read_only": True},
         }
+
+    @atomic
+    def update(self, instance: EvaluacionCrediticia, validated_data):
+        print("###################")
+        print(validated_data)
+        print("###################")
+        documentos_data = validated_data.pop("documentos", [])
+        documentos = Documento.objects.filter(
+            etapa__nombre="Solicitud", evaluacion=instance
+        )
+
+        usuario = self.context["request"].user
+
+        if hasattr(usuario, "perfil_prestatario"):
+            self._update_prestatario_documentos(documentos, documentos_data)
+        elif hasattr(usuario, "perfil_agente_hipotecario"):
+            self._update_agente_documentos(documentos, documentos_data, instance)
+
+        return super().update(instance, validated_data)
+
+    def _update_prestatario_documentos(self, documentos, documentos_data):
+        for documento_data in documentos_data:
+            documento_id = documento_data.get("id")
+            if documento_id:
+                try:
+                    documento = documentos.get(id=documento_id)
+                    documento.archivo = documento_data.get("archivo", documento.archivo)
+                    documento.save()
+                except Documento.DoesNotExist:
+                    pass
+
+    def _update_agente_documentos(self, documentos, documentos_data, instance):
+        documento_ids = [
+            doc_data.get("id") for doc_data in documentos_data if doc_data.get("id")
+        ]
+        documentos.exclude(id__in=documento_ids).delete()
+
+        for documento_data in documentos_data:
+            documento_id = documento_data.get("id")
+            if documento_data.get("nuevo", False):
+                documento_data.pop("nuevo")
+                Documento.objects.create(
+                    evaluacion=instance,
+                    etapa=EtapaEvaluacion.objects.get(nombre="Solicitud"),
+                    **documento_data,
+                )
+            elif documento_id:
+                try:
+                    documento = documentos.get(id=documento_id)
+                    documento.nombre = documento_data.get("nombre", documento.nombre)
+                    documento.descripcion = documento_data.get(
+                        "descripcion", documento.descripcion
+                    )
+                    documento.save()
+                except Documento.DoesNotExist:
+                    pass
