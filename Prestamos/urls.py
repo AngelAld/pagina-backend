@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from .views import (
     EntidadBancariaViewSet,
+    EvaluacionSolicitudView,
     PerfilPrestatarioPrefabViewSet,
     PerfilPrestatarioPrefabDetalleViewSet,
     EtapaEvaluacionViewSet,
@@ -12,6 +13,8 @@ from .views import (
 from django.urls import path, include
 
 router = DefaultRouter()
+
+crud = DefaultRouter()
 
 router.register(r"etapas-evaluacion", EtapaEvaluacionViewSet)
 router.register(r"entidades-bancarias", EntidadBancariaViewSet)
@@ -34,6 +37,11 @@ router.register(
     PerfilPrestatarioPrefabDetalleViewSet,
     basename="prefabs-detalle",
 )
+
+crud.register(r"solicitud", EvaluacionSolicitudView, basename="solicitud")
+
+
 urlpatterns = [
     path("creditos-hipotecarios/", include(router.urls)),
+    path("evaluacion-credito/", include(crud.urls)),
 ]

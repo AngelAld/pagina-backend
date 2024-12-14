@@ -10,7 +10,6 @@ from .models import (
 from .serializers import (
     EntidadBancariaSerializer,
     EvaluacionCrediticiaListSerializer,
-    EvaluacionListSerializer,
     NuevoClienteDetalleSerializer,
     PerfilPrestatarioPrefabListSerializer,
     PerfilPrestatarioPrefabSerializer,
@@ -18,6 +17,9 @@ from .serializers import (
     PreguntaPerfilSerializer,
     NuevosClientesListSerializer,
 )
+
+from .serializerEvaluacion import EvaluacionSolicitudSerializer
+
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
@@ -98,3 +100,10 @@ class EvaluacionCrediticiaListViewSet(ModelViewSet):
             .get_queryset()
             .filter(agente=self.request.user.perfil_agente_hipotecario)
         )
+
+
+class EvaluacionSolicitudView(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.all()
+    serializer_class = EvaluacionSolicitudSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]

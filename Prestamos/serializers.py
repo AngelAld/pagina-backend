@@ -335,7 +335,9 @@ class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
     def _respuestas_match(self, respuestas_prefab, prestatario_respuestas):
         if respuestas_prefab.count() != prestatario_respuestas.count():
             return False
-        return not respuestas_prefab.difference(prestatario_respuestas)
+        return not respuestas_prefab.exclude(
+            id__in=prestatario_respuestas.values_list("id", flat=True)
+        ).exists()
 
     def _create_documentos_from_prefab(self, prefab, evaluacion):
         for documento in prefab.documentos.all():
@@ -347,7 +349,54 @@ class NuevoClienteDetalleSerializer(serializers.ModelSerializer):
             )
 
 
+class PerfilPrestatarioEvaluacionListSerializer(serializers.ModelSerializer):
+    respuestas = RespuestaListSerializer(
+        many=True,
+        read_only=True,
+    )
+    # inmueble = serializers.StringRelatedField(source="inmueble.slug")
+
+    class Meta:
+        model = PerfilPrestatario
+        fields = [
+            # "inmueble",
+            "respuestas",
+        ]
+
+
+class PrestatarioEvaluacionListSerializer(serializers.ModelSerializer):
+    perfil_prestatario = PerfilPrestatarioEvaluacionListSerializer(read_only=True)
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "dni",
+            "perfil_prestatario",
+        ]
+
+
 class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
+    prestatario = PrestatarioEvaluacionListSerializer(
+        source="prestatario.usuario", read_only=True
+    )
+    estado = serializers.StringRelatedField(
+        source="estado.nombre",
+    )
+    etapa = serializers.StringRelatedField(
+        source="etapa.nombre",
+    )
+
     class Meta:
         model = EvaluacionCrediticia
-        fields = "__all__"
+        fields = [
+            "id",
+            "prestatario",
+            "estado",
+            "etapa",
+            "fecha_inicio",
+            "fecha_fin_estimada",
+        ]

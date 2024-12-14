@@ -140,6 +140,10 @@ class EvaluacionCrediticia(models.Model):
         related_name="evaluaciones",
     )
 
+    fecha_inicio = models.DateTimeField(null=True, blank=True)
+    fecha_fin_estimada = models.DateTimeField(null=True, blank=True)
+    fecha_fin_real = models.DateTimeField(null=True, blank=True)
+
     estado = models.ForeignKey(EstadoEvaluacion, on_delete=models.PROTECT)
     etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
 
