@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from .views import (
     EntidadBancariaViewSet,
+    EvaluacionEvaluacionView,
     EvaluacionSolicitudView,
     PerfilPrestatarioPrefabViewSet,
     PerfilPrestatarioPrefabDetalleViewSet,
@@ -39,6 +40,7 @@ router.register(
 )
 
 crud.register(r"solicitud", EvaluacionSolicitudView, basename="solicitud")
+crud.register(r"evaluacion", EvaluacionEvaluacionView, basename="evaluacion")
 
 
 urlpatterns = [

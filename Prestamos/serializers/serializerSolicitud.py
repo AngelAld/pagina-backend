@@ -1,3 +1,4 @@
+from django.http import QueryDict
 from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
@@ -6,6 +7,7 @@ from ..models import (
     EtapaEvaluacion,
     Documento,
     Comentario,
+    PerfilPrestatario,
     RespuestaPerfil,
 )
 
@@ -55,9 +57,9 @@ class ComentarioSerializer(serializers.ModelSerializer):
         }
 
 
-class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
+class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
     """
-    este es el serializador para los datos de la etapa de Evaluación
+    este es el serializador para los datos de la etapa de solicitud
     """
 
     prestatario = PrestatarioDatosSerializer(
@@ -108,7 +110,7 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
         documentos_data = validated_data.pop("documentos", [])
         comentarios_data = validated_data.pop("comentarios", [])
         documentos = Documento.objects.filter(
-            etapa__nombre="Evaluación", evaluacion=instance
+            etapa__nombre="Solicitud", evaluacion=instance
         )
 
         usuario = self.context["request"].user
@@ -122,11 +124,11 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def _update_comentarios(self, comentarios_data):
-        self.instance.comentarios.filter(etapa__nombre="Evaluación").delete()
+        self.instance.comentarios.filter(etapa__nombre="Solicitud").delete()
         for comentario_data in comentarios_data:
             Comentario.objects.create(
                 evaluacion=self.instance,
-                etapa=EtapaEvaluacion.objects.get(nombre="Evaluación"),
+                etapa=EtapaEvaluacion.objects.get(nombre="Solicitud"),
                 **comentario_data,
             )
 
@@ -153,7 +155,7 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
                 documento_data.pop("nuevo")
                 Documento.objects.create(
                     evaluacion=instance,
-                    etapa=EtapaEvaluacion.objects.get(nombre="Evaluación"),
+                    etapa=EtapaEvaluacion.objects.get(nombre="Solicitud"),
                     **documento_data,
                 )
             elif documento_id:

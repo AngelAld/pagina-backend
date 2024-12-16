@@ -21,7 +21,7 @@ from .serializers.serializers import (
     NuevosClientesListSerializer,
 )
 
-from .serializers.serializerEvaluacion import EvaluacionSolicitudSerializer
+from .serializers.serializerSolicitud import EvaluacionSolicitudSerializer
 
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
@@ -139,6 +139,46 @@ class EvaluacionSolicitudView(ModelViewSet):
                         "comentarios",
                         queryset=Comentario.objects.filter(
                             etapa__nombre="Solicitud", visible=True
+                        ),
+                    )
+                )
+            )
+        else:
+            return super().get_queryset().none()
+
+
+class EvaluacionEvaluacionView(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.prefetch_related(
+        Prefetch(
+            "documentos", queryset=Documento.objects.filter(etapa__nombre="Evaluación")
+        ),
+        Prefetch(
+            "comentarios",
+            queryset=Comentario.objects.filter(etapa__nombre="Evaluación"),
+        ),
+    )
+
+    serializer_class = EvaluacionSolicitudSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "put"]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(agente=self.request.user.perfil_agente_hipotecario)
+            )
+        elif hasattr(self.request.user, "perfil_prestatario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(prestatario=self.request.user.perfil_prestatario)
+                .prefetch_related(
+                    Prefetch(
+                        "comentarios",
+                        queryset=Comentario.objects.filter(
+                            etapa__nombre="Evaluación", visible=True
                         ),
                     )
                 )
