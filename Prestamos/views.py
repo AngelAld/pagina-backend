@@ -29,6 +29,7 @@ from .serializers.serializerSolicitud import (
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Count, Q
 
 
 class PreguntaPerfilViewSet(ModelViewSet):
@@ -99,13 +100,20 @@ class EvaluacionCrediticiaListViewSet(ModelViewSet):
     http_method_names = ["get", "delete"]
 
     def get_queryset(self):
-        if not hasattr(self.request.user, "perfil_agente_hipotecario"):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(agente=self.request.user.perfil_agente_hipotecario)
+            )
+        elif hasattr(self.request.user, "perfil_prestatario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(prestatario=self.request.user.perfil_prestatario)
+            )
+        else:
             return super().get_queryset().none()
-        return (
-            super()
-            .get_queryset()
-            .filter(agente=self.request.user.perfil_agente_hipotecario)
-        )
 
 
 from django.db.models import Prefetch
@@ -125,29 +133,28 @@ class EvaluacionSolicitudView(ModelViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "put"]
 
-    def get_queryset(self):
-        if hasattr(self.request.user, "perfil_agente_hipotecario"):
-            return (
-                super()
-                .get_queryset()
-                .filter(agente=self.request.user.perfil_agente_hipotecario)
-            )
-        elif hasattr(self.request.user, "perfil_prestatario"):
-            return (
-                super()
-                .get_queryset()
-                .filter(prestatario=self.request.user.perfil_prestatario)
-                .prefetch_related(
-                    Prefetch(
-                        "comentarios",
-                        queryset=Comentario.objects.filter(
-                            etapa__nombre="Solicitud", visible=True
-                        ),
-                    )
+
+def get_queryset(self):
+    if hasattr(self.request.user, "perfil_agente_hipotecario"):
+        return (
+            super()
+            .get_queryset()
+            .filter(agente=self.request.user.perfil_agente_hipotecario)
+        )
+    elif hasattr(self.request.user, "perfil_prestatario"):
+        return (
+            super()
+            .get_queryset()
+            .filter(prestatario=self.request.user.perfil_prestatario)
+            .prefetch_related(
+                Prefetch(
+                    "comentarios", queryset=Comentario.objects.filter(visible=True)
                 )
             )
-        else:
-            return super().get_queryset().none()
+        )
+
+    else:
+        return super().get_queryset().none()
 
 
 class PasarDeSolicitudAEvaluacionView(ModelViewSet):

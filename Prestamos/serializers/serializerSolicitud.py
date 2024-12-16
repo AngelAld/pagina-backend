@@ -5,6 +5,7 @@ from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
 from ..models import (
+    EstadoEvaluacion,
     EvaluacionCrediticia,
     EtapaEvaluacion,
     Documento,
@@ -103,12 +104,12 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
             "etapa": {"read_only": True},
         }
 
-    def validate(self, attrs):
-        if self.instance.etapa.nombre != "Solicitud":
-            raise serializers.ValidationError(
-                "No se puede modificar una evaluación en otra etapa"
-            )
-        return super().validate(attrs)
+    # def validate(self, attrs):
+    #     if self.instance.etapa.nombre != "Solicitud":
+    #         raise serializers.ValidationError(
+    #             "No se puede modificar una evaluación en otra etapa"
+    #         )
+    #     return super().validate(attrs)
 
     @atomic
     def update(self, instance: EvaluacionCrediticia, validated_data):
@@ -210,8 +211,9 @@ class PasarEtapaSerializer(serializers.ModelSerializer):
         # ahora si vamos a actualizar la etapa de la evaluación
 
         etapa_evaluacion = EtapaEvaluacion.objects.get(nombre="Evaluación")
-
+        estado_evaluacion = EstadoEvaluacion.objects.get(nombre="En evaluación")
         instance.etapa = etapa_evaluacion
+        instance.estado = estado_evaluacion
 
         instance.save()
 
