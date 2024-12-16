@@ -390,6 +390,9 @@ class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
         source="etapa.nombre",
     )
 
+    fecha_inicio = serializers.DateTimeField(format="%d/%m/%Y")
+    fecha_fin_estimada = serializers.DateTimeField(format="%d/%m/%Y")
+
     class Meta:
         model = EvaluacionCrediticia
         fields = [

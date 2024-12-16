@@ -103,6 +103,13 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
             "etapa": {"read_only": True},
         }
 
+    def validate(self, attrs):
+        if self.instance.etapa.nombre != "Solicitud":
+            raise serializers.ValidationError(
+                "No se puede modificar una evaluación en otra etapa"
+            )
+        return super().validate(attrs)
+
     @atomic
     def update(self, instance: EvaluacionCrediticia, validated_data):
         documentos_data = validated_data.pop("documentos", [])
