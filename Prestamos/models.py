@@ -152,7 +152,9 @@ class EvaluacionCrediticia(models.Model):
 
 
 class Comentario(models.Model):
-    evaluacion = models.ForeignKey(EvaluacionCrediticia, on_delete=models.CASCADE)
+    evaluacion = models.ForeignKey(
+        EvaluacionCrediticia, on_delete=models.CASCADE, related_name="comentarios"
+    )
     comentario = models.TextField()
     visible = models.BooleanField(default=False)
     fecha = models.DateTimeField(auto_now_add=True)

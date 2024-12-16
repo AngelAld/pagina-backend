@@ -2,6 +2,7 @@ from rest_framework.viewsets import ModelViewSet
 from Prestamos.permisions import IsAgenteOrPrestatario
 from Usuarios.models import Usuario
 from .models import (
+    Comentario,
     Documento,
     EntidadBancaria,
     EvaluacionCrediticia,
@@ -9,7 +10,7 @@ from .models import (
     EtapaEvaluacion,
     PreguntaPerfil,
 )
-from .serializers import (
+from .serializers.serializers import (
     EntidadBancariaSerializer,
     EvaluacionCrediticiaListSerializer,
     NuevoClienteDetalleSerializer,
@@ -20,7 +21,7 @@ from .serializers import (
     NuevosClientesListSerializer,
 )
 
-from .serializerEvaluacion import EvaluacionSolicitudSerializer
+from .serializers.serializerEvaluacion import EvaluacionSolicitudSerializer
 
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
@@ -111,7 +112,10 @@ class EvaluacionSolicitudView(ModelViewSet):
     queryset = EvaluacionCrediticia.objects.prefetch_related(
         Prefetch(
             "documentos", queryset=Documento.objects.filter(etapa__nombre="Solicitud")
-        )
+        ),
+        Prefetch(
+            "comentarios", queryset=Comentario.objects.filter(etapa__nombre="Solicitud")
+        ),
     )
 
     serializer_class = EvaluacionSolicitudSerializer

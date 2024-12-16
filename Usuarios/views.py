@@ -219,6 +219,7 @@ class ReenviarEmailView(GenericAPIView):
 
 
 class PerfilVistaView(ModelViewSet):
+    queryset = Usuario.objects.all()
     permission_classes = [AllowAny]
     serializer_class = PerfilVistaSerializer
     http_method_names = ["get"]

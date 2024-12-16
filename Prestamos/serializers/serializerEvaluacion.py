@@ -4,10 +4,9 @@ from django.http import QueryDict
 from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
-from .models import (
+from ..models import (
     EvaluacionCrediticia,
     EtapaEvaluacion,
-    EstadoEvaluacion,
     Documento,
     Comentario,
     PerfilPrestatario,

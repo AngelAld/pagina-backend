@@ -4,7 +4,7 @@ from rest_framework import serializers
 from Inmuebles.serializers import InmuebleListSerializer
 from Usuarios.models import Usuario
 
-from .models import (
+from ..models import (
     Documento,
     DocumentoEvaluacionPrefab,
     EntidadBancaria,
