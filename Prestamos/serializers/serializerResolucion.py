@@ -74,14 +74,10 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
         many=True,
     )
 
-    fecha_inicio = serializers.DateTimeField(
-        format="%Y-%m-%d", required=False, read_only=True
-    )
-    fecha_fin_estimada = serializers.DateTimeField(
-        format="%Y-%m-%d", required=False, read_only=True
-    )
+    fecha_inicio = serializers.DateTimeField(format="%Y-%m-%d", required=False)
+    fecha_fin_estimada = serializers.DateTimeField(format="%Y-%m-%d", required=False)
     fecha_fin_real = serializers.DateTimeField(
-        format="%Y-%m-%d", required=False, allow_null=True, read_only=True
+        format="%Y-%m-%d", required=False, allow_null=True
     )
 
     class Meta:

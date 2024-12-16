@@ -21,7 +21,10 @@ from .serializers.serializers import (
     NuevosClientesListSerializer,
 )
 
-from .serializers.serializerSolicitud import EvaluacionSolicitudSerializer
+from .serializers.serializerSolicitud import (
+    EvaluacionSolicitudSerializer,
+    PasarEtapaSerializer,
+)
 
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
@@ -145,6 +148,25 @@ class EvaluacionSolicitudView(ModelViewSet):
             )
         else:
             return super().get_queryset().none()
+
+
+class PasarDeSolicitudAEvaluacionView(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.all()
+    serializer_class = PasarEtapaSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["put"]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(
+                    agente=self.request.user.perfil_agente_hipotecario,
+                    etapa__nombre="Solicitud",
+                )
+            )
+        return super().get_queryset().none()
 
 
 class EvaluacionEvaluacionView(ModelViewSet):

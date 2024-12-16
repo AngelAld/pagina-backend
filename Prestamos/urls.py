@@ -3,6 +3,7 @@ from .views import (
     EntidadBancariaViewSet,
     EvaluacionEvaluacionView,
     EvaluacionSolicitudView,
+    PasarDeSolicitudAEvaluacionView,
     PerfilPrestatarioPrefabViewSet,
     PerfilPrestatarioPrefabDetalleViewSet,
     EtapaEvaluacionViewSet,
@@ -41,6 +42,11 @@ router.register(
 
 crud.register(r"solicitud", EvaluacionSolicitudView, basename="solicitud")
 crud.register(r"evaluacion", EvaluacionEvaluacionView, basename="evaluacion")
+crud.register(
+    r"solicitud/avanzar",
+    PasarDeSolicitudAEvaluacionView,
+    basename="avanzar de solicitud a evaluacion",
+)
 
 
 urlpatterns = [

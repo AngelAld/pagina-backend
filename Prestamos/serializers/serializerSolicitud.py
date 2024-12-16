@@ -1,3 +1,5 @@
+from math import e
+from os import read
 from django.http import QueryDict
 from rest_framework import serializers
 from django.db.transaction import atomic
@@ -7,7 +9,6 @@ from ..models import (
     EtapaEvaluacion,
     Documento,
     Comentario,
-    PerfilPrestatario,
     RespuestaPerfil,
 )
 
@@ -79,7 +80,7 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
     fecha_inicio = serializers.DateTimeField(format="%Y-%m-%d", required=False)
     fecha_fin_estimada = serializers.DateTimeField(format="%Y-%m-%d", required=False)
     fecha_fin_real = serializers.DateTimeField(
-        format="%Y-%m-%d", required=False, allow_null=True
+        format="%Y-%m-%d", required=False, allow_null=True, read_only=True
     )
 
     class Meta:
@@ -104,9 +105,6 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
 
     @atomic
     def update(self, instance: EvaluacionCrediticia, validated_data):
-        print("###################")
-        print(validated_data)
-        print("###################")
         documentos_data = validated_data.pop("documentos", [])
         comentarios_data = validated_data.pop("comentarios", [])
         documentos = Documento.objects.filter(
@@ -168,3 +166,46 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
                     documento.save()
                 except Documento.DoesNotExist:
                     pass
+
+
+class PasarEtapaSerializer(serializers.ModelSerializer):
+    """
+    este es el serializador para pasar de etapa de solicitud a etapa de evaluación
+    """
+
+    etapa = serializers.StringRelatedField(source="etapa.nombre", read_only=True)
+
+    class Meta:
+        model = EvaluacionCrediticia
+        fields = ["etapa"]
+
+    @atomic
+    def update(self, instance: EvaluacionCrediticia, validated_data):
+        # primero vamos a validar si tenemos fecha de inicio y fin correctamente ingresadas
+
+        if not instance.fecha_inicio or not instance.fecha_fin_estimada:
+            raise serializers.ValidationError(
+                "No se puede pasar de etapa sin tener fecha de inicio o fin estimada"
+            )
+
+        # ahora vamos a validar si todos los documentos tienen un archivo adjunto
+
+        documentos = Documento.objects.filter(
+            etapa__nombre="Solicitud", evaluacion=instance
+        )
+
+        for documento in documentos:
+            if not documento.archivo:
+                raise serializers.ValidationError(
+                    f"El documento {documento.nombre} no tiene un archivo adjunto"
+                )
+
+        # ahora si vamos a actualizar la etapa de la evaluación
+
+        etapa_evaluacion = EtapaEvaluacion.objects.get(nombre="Evaluación")
+
+        instance.etapa = etapa_evaluacion
+
+        instance.save()
+
+        return instance
