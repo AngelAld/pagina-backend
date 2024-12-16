@@ -134,6 +134,14 @@ class EvaluacionSolicitudView(ModelViewSet):
                 super()
                 .get_queryset()
                 .filter(prestatario=self.request.user.perfil_prestatario)
+                .prefetch_related(
+                    Prefetch(
+                        "comentarios",
+                        queryset=Comentario.objects.filter(
+                            etapa__nombre="Solicitud", visible=True
+                        ),
+                    )
+                )
             )
         else:
             return super().get_queryset().none()

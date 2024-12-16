@@ -50,6 +50,15 @@ class DocumentoSerializer(serializers.ModelSerializer):
         }
 
 
+class ComentarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comentario
+        fields = ["id", "comentario", "fecha", "visible"]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
 class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
     """
     este es el serializador para los datos de la etapa de solicitud
@@ -60,6 +69,11 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
     )
 
     documentos = DocumentoSerializer(
+        read_only=False,
+        many=True,
+    )
+
+    comentarios = ComentarioSerializer(
         read_only=False,
         many=True,
     )
@@ -81,6 +95,7 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
             "estado",
             "etapa",
             "documentos",
+            "comentarios",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -95,6 +110,7 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
         print(validated_data)
         print("###################")
         documentos_data = validated_data.pop("documentos", [])
+        comentarios_data = validated_data.pop("comentarios", [])
         documentos = Documento.objects.filter(
             etapa__nombre="Solicitud", evaluacion=instance
         )
@@ -105,8 +121,18 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
             self._update_prestatario_documentos(documentos, documentos_data)
         elif hasattr(usuario, "perfil_agente_hipotecario"):
             self._update_agente_documentos(documentos, documentos_data, instance)
+            self._update_comentarios(comentarios_data)
 
         return super().update(instance, validated_data)
+
+    def _update_comentarios(self, comentarios_data):
+        self.instance.comentarios.filter(etapa__nombre="Solicitud").delete()
+        for comentario_data in comentarios_data:
+            Comentario.objects.create(
+                evaluacion=self.instance,
+                etapa=EtapaEvaluacion.objects.get(nombre="Solicitud"),
+                **comentario_data,
+            )
 
     def _update_prestatario_documentos(self, documentos, documentos_data):
         for documento_data in documentos_data:
