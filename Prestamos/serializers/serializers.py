@@ -403,3 +403,41 @@ class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
             "fecha_inicio",
             "fecha_fin_estimada",
         ]
+
+
+class AgenteSerializer(serializers.ModelSerializer):
+    entidad = serializers.StringRelatedField()
+
+    class Meta:
+        model = Usuario
+        fields = [
+            "id",
+            "email",
+            "nombres",
+            "apellidos",
+            "entidad",
+        ]
+
+
+class EvaluacionCrediticiaClienteListSerializer(serializers.ModelSerializer):
+    agente = AgenteSerializer(source="agente.usuario", read_only=True)
+    estado = serializers.StringRelatedField(
+        source="estado.nombre",
+    )
+    etapa = serializers.StringRelatedField(
+        source="etapa.nombre",
+    )
+
+    fecha_inicio = serializers.DateTimeField(format="%d/%m/%Y")
+    fecha_fin_estimada = serializers.DateTimeField(format="%d/%m/%Y")
+
+    class Meta:
+        model = EvaluacionCrediticia
+        fields = [
+            "id",
+            "agente",
+            "estado",
+            "etapa",
+            "fecha_inicio",
+            "fecha_fin_estimada",
+        ]

@@ -10,8 +10,10 @@ from .models import (
     EtapaEvaluacion,
     PreguntaPerfil,
 )
+from django.db.models import Prefetch
 from .serializers.serializers import (
     EntidadBancariaSerializer,
+    EvaluacionCrediticiaClienteListSerializer,
     EvaluacionCrediticiaListSerializer,
     NuevoClienteDetalleSerializer,
     PerfilPrestatarioPrefabListSerializer,
@@ -97,7 +99,7 @@ class EvaluacionCrediticiaListViewSet(ModelViewSet):
     queryset = EvaluacionCrediticia.objects.all()
     serializer_class = EvaluacionCrediticiaListSerializer
     permission_classes = [IsAuthenticated]
-    http_method_names = ["get", "delete"]
+    http_method_names = ["get"]
 
     def get_queryset(self):
         if hasattr(self.request.user, "perfil_agente_hipotecario"):
@@ -106,7 +108,18 @@ class EvaluacionCrediticiaListViewSet(ModelViewSet):
                 .get_queryset()
                 .filter(agente=self.request.user.perfil_agente_hipotecario)
             )
-        elif hasattr(self.request.user, "perfil_prestatario"):
+        else:
+            return super().get_queryset().none()
+
+
+class EvaluacionCrediticiaClienteListViewSet(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.all()
+    serializer_class = EvaluacionCrediticiaClienteListSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_prestatario"):
             return (
                 super()
                 .get_queryset()
@@ -114,9 +127,6 @@ class EvaluacionCrediticiaListViewSet(ModelViewSet):
             )
         else:
             return super().get_queryset().none()
-
-
-from django.db.models import Prefetch
 
 
 class EvaluacionSolicitudView(ModelViewSet):

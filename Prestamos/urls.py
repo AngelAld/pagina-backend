@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from .views import (
     EntidadBancariaViewSet,
+    EvaluacionCrediticiaClienteListViewSet,
     EvaluacionEvaluacionView,
     EvaluacionSolicitudView,
     PasarDeSolicitudAEvaluacionView,
@@ -33,7 +34,11 @@ router.register(
     EvaluacionCrediticiaListViewSet,
     basename="evaluaciones-crediticias",
 )
-
+router.register(
+    r"evaluaciones-crediticias-cliente",
+    EvaluacionCrediticiaClienteListViewSet,
+    basename="evaluaciones-crediticias-cliente",
+)
 router.register(
     r"prefabs-detalle",
     PerfilPrestatarioPrefabDetalleViewSet,
