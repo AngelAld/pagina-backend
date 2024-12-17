@@ -392,6 +392,7 @@ class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
 
     fecha_inicio = serializers.DateTimeField(format="%d/%m/%Y")
     fecha_fin_estimada = serializers.DateTimeField(format="%d/%m/%Y")
+    fecha_fin_real = serializers.DateTimeField(format="%d/%m/%Y")
 
     class Meta:
         model = EvaluacionCrediticia
@@ -402,6 +403,7 @@ class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
             "etapa",
             "fecha_inicio",
             "fecha_fin_estimada",
+            "fecha_fin_real",
         ]
 
 
@@ -430,6 +432,7 @@ class EvaluacionCrediticiaClienteListSerializer(serializers.ModelSerializer):
 
     fecha_inicio = serializers.DateTimeField(format="%d/%m/%Y")
     fecha_fin_estimada = serializers.DateTimeField(format="%d/%m/%Y")
+    fecha_fin_real = serializers.DateTimeField(format="%d/%m/%Y")
 
     class Meta:
         model = EvaluacionCrediticia
@@ -440,4 +443,5 @@ class EvaluacionCrediticiaClienteListSerializer(serializers.ModelSerializer):
             "etapa",
             "fecha_inicio",
             "fecha_fin_estimada",
+            "fecha_fin_real",
         ]
