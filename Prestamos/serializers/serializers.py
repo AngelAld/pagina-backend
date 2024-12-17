@@ -408,7 +408,9 @@ class EvaluacionCrediticiaListSerializer(serializers.ModelSerializer):
 
 
 class AgenteSerializer(serializers.ModelSerializer):
-    entidad = serializers.StringRelatedField()
+    entidad = serializers.StringRelatedField(
+        source="perfil_agente_hipotecario.entidad.nombre"
+    )
 
     class Meta:
         model = Usuario
