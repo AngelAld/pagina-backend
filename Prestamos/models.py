@@ -91,6 +91,7 @@ class EstadoEvaluacion(models.Model):
         blank=True,
         null=True,
     )
+    is_system_managed = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nombre
@@ -144,7 +145,9 @@ class EvaluacionCrediticia(models.Model):
     fecha_fin_estimada = models.DateTimeField(null=True, blank=True)
     fecha_fin_real = models.DateTimeField(null=True, blank=True)
 
-    estado = models.ForeignKey(EstadoEvaluacion, on_delete=models.PROTECT)
+    estado = models.ForeignKey(
+        EstadoEvaluacion, on_delete=models.PROTECT, null=True, blank=True
+    )
     etapa = models.ForeignKey(EtapaEvaluacion, on_delete=models.PROTECT)
 
     def __str__(self):

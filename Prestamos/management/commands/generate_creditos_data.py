@@ -10,12 +10,30 @@ from Prestamos.models import (
 entidades = ["BCP"]
 
 estados = [
-    "En solicitud",
-    "En evaluación",
-    "Observado",
-    "Aprobado",
-    "Rechazado",
-    "Cancelado",
+    {
+        "nombre": "En solicitud",
+        "is_system_managed": True,
+    },
+    {
+        "nombre": "En evaluación",
+        "is_system_managed": True,
+    },
+    {
+        "nombre": "Observado",
+        "is_system_managed": False,
+    },
+    {
+        "nombre": "Aprobado",
+        "is_system_managed": False,
+    },
+    {
+        "nombre": "Rechazado",
+        "is_system_managed": False,
+    },
+    {
+        "nombre": "Cancelado",
+        "is_system_managed": True,
+    },
 ]
 
 etapas = [
@@ -45,7 +63,11 @@ class Command(BaseCommand):
         self.stdout.write("Creando estados de evaluación")
 
         for estado in estados:
-            EstadoEvaluacion.objects.get_or_create(nombre=estado)
+            estadoObj, _ = EstadoEvaluacion.objects.get_or_create(
+                nombre=estado["nombre"],
+            )
+            estadoObj.is_system_managed = estado["is_system_managed"]
+            estadoObj.save()
 
         self.stdout.write("Creando etapas de evaluación")
 

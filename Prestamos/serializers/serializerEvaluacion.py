@@ -84,6 +84,13 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
         format="%Y-%m-%d", required=False, allow_null=True, read_only=True
     )
 
+    def validate(self, attrs):
+        if self.instance.etapa.nombre != "Evaluación":
+            raise serializers.ValidationError(
+                "No se puede modificar una evaluación en otra etapa"
+            )
+        return super().validate(attrs)
+
     class Meta:
         model = EvaluacionCrediticia
         fields = [
@@ -170,3 +177,9 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
                     documento.save()
                 except Documento.DoesNotExist:
                     pass
+
+
+class PasarEtapaSerializer(serializers.ModelSerializer):
+    """
+    Este es el serializar para pasar de etapa de evaluación a etapa de resolución
+    """
