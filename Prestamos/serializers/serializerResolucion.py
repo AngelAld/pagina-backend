@@ -87,7 +87,7 @@ class EvaluacionResolucionSerializer(serializers.ModelSerializer):
 
     estado_id = serializers.PrimaryKeyRelatedField(
         source="estado",
-        queryset=EstadoEvaluacion.objects.filter(is_system_managed=False),
+        queryset=EstadoEvaluacion.objects.all(),
         required=False,
     )
 
