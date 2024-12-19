@@ -1,7 +1,9 @@
+import re
 from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
 from ..models import (
+    EstadoEvaluacion,
     EvaluacionCrediticia,
     EtapaEvaluacion,
     Documento,
@@ -55,7 +57,10 @@ class ComentarioSerializer(serializers.ModelSerializer):
         }
 
 
-class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
+from datetime import datetime
+
+
+class EvaluacionResolucionSerializer(serializers.ModelSerializer):
     """
     este es el serializador para los datos de la etapa de Evaluación
     """
@@ -69,15 +74,21 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
         many=True,
     )
 
-    comentarios = ComentarioSerializer(
-        read_only=False,
-        many=True,
+    fecha_inicio = serializers.DateTimeField(
+        format="%Y-%m-%d", required=False, read_only=True
     )
-
-    fecha_inicio = serializers.DateTimeField(format="%Y-%m-%d", required=False)
-    fecha_fin_estimada = serializers.DateTimeField(format="%Y-%m-%d", required=False)
+    fecha_fin_estimada = serializers.DateTimeField(
+        format="%Y-%m-%d", required=False, read_only=True
+    )
     fecha_fin_real = serializers.DateTimeField(
-        format="%Y-%m-%d", required=False, allow_null=True
+        format="%Y-%m-%d", required=False, allow_null=True, read_only=True
+    )
+    estado = serializers.StringRelatedField(source="estado.nombre", read_only=True)
+
+    estado_id = serializers.PrimaryKeyRelatedField(
+        source="estado",
+        queryset=EstadoEvaluacion.objects.filter(is_system_managed=False),
+        required=False,
     )
 
     class Meta:
@@ -89,9 +100,9 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
             "fecha_fin_estimada",
             "fecha_fin_real",
             "estado",
+            "estado_id",
             "etapa",
             "documentos",
-            "comentarios",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -100,13 +111,17 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
             "etapa": {"read_only": True},
         }
 
+    def validate(self, attrs):
+        if self.instance.etapa.nombre != "Resolución":
+            raise serializers.ValidationError(
+                "No se puede modificar una evaluación en otra etapa"
+            )
+        return super().validate(attrs)
+
     @atomic
     def update(self, instance: EvaluacionCrediticia, validated_data):
-        print("###################")
-        print(validated_data)
-        print("###################")
         documentos_data = validated_data.pop("documentos", [])
-        comentarios_data = validated_data.pop("comentarios", [])
+        # comentarios_data = validated_data.pop("comentarios", [])
         documentos = Documento.objects.filter(
             etapa__nombre="Evaluación", evaluacion=instance
         )
@@ -116,8 +131,17 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
         if hasattr(usuario, "perfil_prestatario"):
             self._update_prestatario_documentos(documentos, documentos_data)
         elif hasattr(usuario, "perfil_agente_hipotecario"):
-            self._update_agente_documentos(documentos, documentos_data, instance)
-            self._update_comentarios(comentarios_data)
+            estado = validated_data.pop("estado", None)
+            if estado and estado.nombre == "Aprobada" or estado.nombre == "Rechazada":
+                instance.etapa = EtapaEvaluacion.objects.get(nombre="Finalizada")
+                instance.estado = estado
+                instance.fecha_fin_real = datetime.now()
+                instance.save()
+                return instance
+            elif estado and estado.nombre == "Observada":
+                instance.estado = estado
+                instance.save()
+                self._update_agente_documentos(documentos, documentos_data, instance)
 
         return super().update(instance, validated_data)
 

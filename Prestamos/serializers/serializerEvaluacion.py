@@ -1,3 +1,4 @@
+from pyexpat import model
 from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
@@ -83,6 +84,8 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
     fecha_fin_real = serializers.DateTimeField(
         format="%Y-%m-%d", required=False, allow_null=True, read_only=True
     )
+
+    estado = serializers.StringRelatedField(source="estado.nombre", read_only=True)
 
     def validate(self, attrs):
         if self.instance.etapa.nombre != "Evaluación":
@@ -183,3 +186,30 @@ class PasarEtapaSerializer(serializers.ModelSerializer):
     """
     Este es el serializar para pasar de etapa de evaluación a etapa de resolución
     """
+
+    etapa = serializers.StringRelatedField(read_only=True, source="etapa.nombre")
+
+    class Meta:
+        model = EvaluacionCrediticia
+        fields = ["etapa"]
+
+    def validate(self, attrs):
+        if self.instance.etapa.nombre != "Evaluación":
+            raise serializers.ValidationError(
+                "No se puede modificar una evaluación en otra etapa"
+            )
+        return super().validate(attrs)
+
+    @atomic
+    def update(self, instance: EvaluacionCrediticia, validated_data):
+
+        if not instance.fecha_inicio or not instance.fecha_fin_estimada:
+            raise serializers.ValidationError(
+                "La evaluación no tiene fecha de inicio o fecha de fin estimada"
+            )
+
+        etapa_resolucion = EtapaEvaluacion.objects.get(nombre="Resolución")
+        instance.etapa = etapa_resolucion
+        instance.save()
+
+        return instance

@@ -40,6 +40,7 @@ etapas = [
     "Solicitud",
     "Evaluación",
     "Resolución",
+    "Finalizado",
 ]
 
 preguntas = ["pregunta1", "pregunta2", "pregunta3"]

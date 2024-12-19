@@ -1,6 +1,3 @@
-from math import e
-from os import read
-from django.http import QueryDict
 from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
@@ -12,6 +9,35 @@ from ..models import (
     Comentario,
     RespuestaPerfil,
 )
+from drf_extra_fields.fields import Base64FileField
+
+
+import io
+from PyPDF2 import PdfReader
+
+
+class PdfBase64FileField(Base64FileField):
+
+    ALLOWED_TYPES = ["pdf"]
+
+    def get_file_extension(self, filename, decoded_file):
+        """
+        Verifica si el archivo decodificado es un PDF válido.
+
+        :param filename: Nombre del archivo (str) (sin necesidad de usarlo aquí)
+        :param decoded_file: Contenido del archivo (bytes)
+        :return: 'pdf' si el archivo es un PDF válido, de lo contrario None
+        """
+        try:
+            # Intentar leer el PDF usando PyPDF2
+            pdf_file = io.BytesIO(decoded_file)
+            PdfReader(pdf_file)
+
+            # Si se puede leer sin excepciones, retornar 'pdf'
+            return "pdf"
+        except Exception:
+            # Si hay un error al abrir el PDF, retornar None
+            raise serializers.ValidationError("El archivo no es un PDF válido")
 
 
 class RespuestasSerializer(serializers.ModelSerializer):
@@ -41,6 +67,7 @@ class PrestatarioDatosSerializer(serializers.ModelSerializer):
 
 class DocumentoSerializer(serializers.ModelSerializer):
     nuevo = serializers.BooleanField(write_only=True, default=False)
+    archivo = PdfBase64FileField(required=False, allow_null=True)
 
     class Meta:
         model = Documento
@@ -73,16 +100,14 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
         many=True,
     )
 
-    comentarios = ComentarioSerializer(
-        read_only=False,
-        many=True,
-    )
-
     fecha_inicio = serializers.DateTimeField(format="%Y-%m-%d", required=False)
     fecha_fin_estimada = serializers.DateTimeField(format="%Y-%m-%d", required=False)
     fecha_fin_real = serializers.DateTimeField(
         format="%Y-%m-%d", required=False, allow_null=True, read_only=True
     )
+
+    estado = serializers.StringRelatedField(source="estado.nombre", read_only=True)
+    etapa = serializers.StringRelatedField(source="etapa.nombre", read_only=True)
 
     class Meta:
         model = EvaluacionCrediticia
@@ -95,7 +120,6 @@ class EvaluacionSolicitudSerializer(serializers.ModelSerializer):
             "estado",
             "etapa",
             "documentos",
-            "comentarios",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
@@ -187,6 +211,13 @@ class PasarEtapaSerializer(serializers.ModelSerializer):
         model = EvaluacionCrediticia
         fields = ["etapa"]
 
+    def validate(self, attrs):
+        if self.instance.etapa.nombre != "Solicitud":
+            raise serializers.ValidationError(
+                "No se puede modificar una evaluación en otra etapa"
+            )
+        return super().validate(attrs)
+
     @atomic
     def update(self, instance: EvaluacionCrediticia, validated_data):
         # primero vamos a validar si tenemos fecha de inicio y fin correctamente ingresadas
@@ -198,15 +229,15 @@ class PasarEtapaSerializer(serializers.ModelSerializer):
 
         # ahora vamos a validar si todos los documentos tienen un archivo adjunto
 
-        documentos = Documento.objects.filter(
-            etapa__nombre="Solicitud", evaluacion=instance
-        )
+        # documentos = Documento.objects.filter(
+        #     etapa__nombre="Solicitud", evaluacion=instance
+        # )
 
-        for documento in documentos:
-            if not documento.archivo:
-                raise serializers.ValidationError(
-                    f"El documento {documento.nombre} no tiene un archivo adjunto"
-                )
+        # for documento in documentos:
+        #     if not documento.archivo:
+        #         raise serializers.ValidationError(
+        #             f"El documento {documento.nombre} no tiene un archivo adjunto"
+        #         )
 
         # ahora si vamos a actualizar la etapa de la evaluación
 

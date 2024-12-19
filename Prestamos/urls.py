@@ -1,9 +1,12 @@
 from rest_framework.routers import DefaultRouter
 from .views import (
     EntidadBancariaViewSet,
+    EstadoEvaluacionViewSet,
     EvaluacionCrediticiaClienteListViewSet,
     EvaluacionEvaluacionView,
+    EvaluacionResolucionView,
     EvaluacionSolicitudView,
+    PasarDeEvaluacionAResolucionView,
     PasarDeSolicitudAEvaluacionView,
     PerfilPrestatarioPrefabViewSet,
     PerfilPrestatarioPrefabDetalleViewSet,
@@ -46,14 +49,19 @@ router.register(
 )
 
 crud.register(r"solicitud", EvaluacionSolicitudView, basename="solicitud")
-crud.register(r"evaluacion", EvaluacionEvaluacionView, basename="evaluacion")
 crud.register(
     r"solicitud/avanzar",
     PasarDeSolicitudAEvaluacionView,
     basename="avanzar de solicitud a evaluacion",
 )
-
-
+crud.register(r"evaluacion", EvaluacionEvaluacionView, basename="evaluacion")
+crud.register(
+    r"evaluacion/avanzar",
+    PasarDeEvaluacionAResolucionView,
+    basename="avanzar de evaluacion a resolucion",
+)
+crud.register(r"resolucion", EvaluacionResolucionView, basename="resolucion")
+crud.register(r"estado", EstadoEvaluacionViewSet, basename="estado")
 urlpatterns = [
     path("creditos-hipotecarios/", include(router.urls)),
     path("evaluacion-credito/", include(crud.urls)),

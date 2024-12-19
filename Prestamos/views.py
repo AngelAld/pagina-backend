@@ -1,10 +1,14 @@
 from rest_framework.viewsets import ModelViewSet
-from Prestamos.permisions import IsAgenteOrPrestatario
+from Prestamos.serializers.serializerEvaluacion import (
+    EvaluacionEvaluacionSerializer,
+    PasarEtapaSerializer as PasarEtapaEvaluacionSerializer,
+)
+from Prestamos.serializers.serializerResolucion import EvaluacionResolucionSerializer
 from Usuarios.models import Usuario
 from .models import (
-    Comentario,
     Documento,
     EntidadBancaria,
+    EstadoEvaluacion,
     EvaluacionCrediticia,
     PerfilPrestatarioPrefab,
     EtapaEvaluacion,
@@ -13,6 +17,7 @@ from .models import (
 from django.db.models import Prefetch
 from .serializers.serializers import (
     EntidadBancariaSerializer,
+    EstadoEvaluacionSerializer,
     EvaluacionCrediticiaClienteListSerializer,
     EvaluacionCrediticiaListSerializer,
     NuevoClienteDetalleSerializer,
@@ -25,13 +30,12 @@ from .serializers.serializers import (
 
 from .serializers.serializerSolicitud import (
     EvaluacionSolicitudSerializer,
-    PasarEtapaSerializer,
+    PasarEtapaSerializer as PasarEtapaSolicitudSerializer,
 )
 
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Count, Q
 
 
 class PreguntaPerfilViewSet(ModelViewSet):
@@ -134,42 +138,33 @@ class EvaluacionSolicitudView(ModelViewSet):
         Prefetch(
             "documentos", queryset=Documento.objects.filter(etapa__nombre="Solicitud")
         ),
-        Prefetch(
-            "comentarios", queryset=Comentario.objects.filter(etapa__nombre="Solicitud")
-        ),
     )
 
     serializer_class = EvaluacionSolicitudSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "put"]
 
-
-def get_queryset(self):
-    if hasattr(self.request.user, "perfil_agente_hipotecario"):
-        return (
-            super()
-            .get_queryset()
-            .filter(agente=self.request.user.perfil_agente_hipotecario)
-        )
-    elif hasattr(self.request.user, "perfil_prestatario"):
-        return (
-            super()
-            .get_queryset()
-            .filter(prestatario=self.request.user.perfil_prestatario)
-            .prefetch_related(
-                Prefetch(
-                    "comentarios", queryset=Comentario.objects.filter(visible=True)
-                )
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(agente=self.request.user.perfil_agente_hipotecario)
             )
-        )
+        elif hasattr(self.request.user, "perfil_prestatario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(prestatario=self.request.user.perfil_prestatario)
+            )
 
-    else:
-        return super().get_queryset().none()
+        else:
+            return super().get_queryset().none()
 
 
 class PasarDeSolicitudAEvaluacionView(ModelViewSet):
     queryset = EvaluacionCrediticia.objects.all()
-    serializer_class = PasarEtapaSerializer
+    serializer_class = PasarEtapaSolicitudSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["put"]
 
@@ -191,13 +186,9 @@ class EvaluacionEvaluacionView(ModelViewSet):
         Prefetch(
             "documentos", queryset=Documento.objects.filter(etapa__nombre="Evaluación")
         ),
-        Prefetch(
-            "comentarios",
-            queryset=Comentario.objects.filter(etapa__nombre="Evaluación"),
-        ),
     )
 
-    serializer_class = EvaluacionSolicitudSerializer
+    serializer_class = EvaluacionEvaluacionSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "put"]
 
@@ -213,14 +204,62 @@ class EvaluacionEvaluacionView(ModelViewSet):
                 super()
                 .get_queryset()
                 .filter(prestatario=self.request.user.perfil_prestatario)
-                .prefetch_related(
-                    Prefetch(
-                        "comentarios",
-                        queryset=Comentario.objects.filter(
-                            etapa__nombre="Evaluación", visible=True
-                        ),
-                    )
-                )
             )
+
         else:
             return super().get_queryset().none()
+
+
+class PasarDeEvaluacionAResolucionView(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.all()
+    serializer_class = PasarEtapaEvaluacionSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["put"]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(
+                    agente=self.request.user.perfil_agente_hipotecario,
+                    etapa__nombre="Evaluación",
+                )
+            )
+        return super().get_queryset().none()
+
+
+class EvaluacionResolucionView(ModelViewSet):
+    queryset = EvaluacionCrediticia.objects.prefetch_related(
+        Prefetch(
+            "documentos", queryset=Documento.objects.filter(etapa__nombre="Resolución")
+        ),
+    )
+
+    serializer_class = EvaluacionResolucionSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "put"]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "perfil_agente_hipotecario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(agente=self.request.user.perfil_agente_hipotecario)
+            )
+        elif hasattr(self.request.user, "perfil_prestatario"):
+            return (
+                super()
+                .get_queryset()
+                .filter(prestatario=self.request.user.perfil_prestatario)
+            )
+
+        else:
+            return super().get_queryset().none()
+
+
+class EstadoEvaluacionViewSet(ModelViewSet):
+    queryset = EstadoEvaluacion.objects.filter(is_system_managed=False)
+    serializer_class = EstadoEvaluacionSerializer
+    # permission_classes = [IsAuthenticated]
+    http_method_names = ["get"]
