@@ -87,6 +87,7 @@ class EvaluacionEvaluacionSerializer(serializers.ModelSerializer):
     )
 
     estado = serializers.StringRelatedField(source="estado.nombre", read_only=True)
+    etapa = serializers.StringRelatedField(source="etapa.nombre", read_only=True)
 
     def validate(self, attrs):
         if self.instance.etapa.nombre != "Evaluación":

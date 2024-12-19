@@ -84,6 +84,7 @@ class EvaluacionResolucionSerializer(serializers.ModelSerializer):
         format="%Y-%m-%d", required=False, allow_null=True, read_only=True
     )
     estado = serializers.StringRelatedField(source="estado.nombre", read_only=True)
+    etapa = serializers.StringRelatedField(source="etapa.nombre", read_only=True)
 
     estado_id = serializers.PrimaryKeyRelatedField(
         source="estado",
