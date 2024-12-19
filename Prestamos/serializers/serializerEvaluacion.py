@@ -3,6 +3,7 @@ from rest_framework import serializers
 from django.db.transaction import atomic
 from Usuarios.models import Usuario
 from ..models import (
+    EstadoEvaluacion,
     EvaluacionCrediticia,
     EtapaEvaluacion,
     Documento,
@@ -209,7 +210,9 @@ class PasarEtapaSerializer(serializers.ModelSerializer):
             )
 
         etapa_resolucion = EtapaEvaluacion.objects.get(nombre="Resolución")
+        estado_resolucion = EstadoEvaluacion.objects.get(nombre="En resolución")
         instance.etapa = etapa_resolucion
+        instance.estado = estado_resolucion
         instance.save()
 
         return instance

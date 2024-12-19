@@ -19,6 +19,10 @@ estados = [
         "is_system_managed": True,
     },
     {
+        "nombre": "En resolución",
+        "is_system_managed": True,
+    },
+    {
         "nombre": "Observada",
         "is_system_managed": False,
     },
