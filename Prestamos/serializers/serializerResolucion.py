@@ -120,6 +120,10 @@ class EvaluacionResolucionSerializer(serializers.ModelSerializer):
 
     @atomic
     def update(self, instance: EvaluacionCrediticia, validated_data):
+
+        print("######################")
+        print(validated_data)
+        print("######################")
         documentos_data = validated_data.pop("documentos", [])
         # comentarios_data = validated_data.pop("comentarios", [])
         documentos = Documento.objects.filter(

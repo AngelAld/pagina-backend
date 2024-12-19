@@ -19,19 +19,19 @@ estados = [
         "is_system_managed": True,
     },
     {
-        "nombre": "Observado",
+        "nombre": "Observada",
         "is_system_managed": False,
     },
     {
-        "nombre": "Aprobado",
+        "nombre": "Aprobada",
         "is_system_managed": False,
     },
     {
-        "nombre": "Rechazado",
+        "nombre": "Rechazada",
         "is_system_managed": False,
     },
     {
-        "nombre": "Cancelado",
+        "nombre": "Cancelada",
         "is_system_managed": True,
     },
 ]
